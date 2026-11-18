@@ -8,3 +8,4 @@ creator-vault/**/Selects.md
 creator-vault/Searches/
 # Local preview launcher (machine-specific paths)
 .claude/
+creator-vault/**/String-out.md

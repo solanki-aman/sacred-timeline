@@ -61,14 +61,20 @@ class Hit:
     tags: dict = field(default_factory=dict)
 
 
-def recall(db: sqlite3.Connection, embedder, queries: list[str], pool: int) -> tuple[np.ndarray, dict[str, list]]:
+def recall(db: sqlite3.Connection, embedder, queries: list[str], pool: int,
+           include_cards: bool = False) -> tuple[np.ndarray, dict[str, list]]:
     ids, mat = vectors(db)
     qv = embedder.queries(queries)
     sims = qv @ mat.T
+    if not include_cards:  # end cards and promo graphics never make the shortlist
+        from .lenses import CARD_TEXT, cards
+        tags = {r[0]: json.loads(r[1]).get("footage") for r in db.execute("select id, tags from moments where tags is not null")}
+        footage = np.array([np.nan if tags.get(int(i)) is None else tags[int(i)] for i in ids], dtype=float)
+        sims[:, cards(mat, embedder.queries([CARD_TEXT])[0], footage)] = -np.inf
     out = {}
     for i, q in enumerate(queries):
         order = np.argsort(-sims[i])[:pool]
-        out[q] = [(int(ids[j]), float(sims[i, j])) for j in order]
+        out[q] = [(int(ids[j]), float(sims[i, j])) for j in order if np.isfinite(sims[i, j])]
     return qv, out
 
 
@@ -78,7 +84,7 @@ def search(db: sqlite3.Connection, embedder, model: DecisionModel | None, querie
     if where:
         pool *= 3
     t = time.time()
-    _, shortlist = recall(db, embedder, queries, pool)
+    _, shortlist = recall(db, embedder, queries, pool, include_cards)
     log(f"  recall: {sum(len(v) for v in shortlist.values())} candidates in {(time.time() - t) * 1000:.0f} ms")
     cand = sorted({m for v in shortlist.values() for m, _ in v})
     rows = {r["id"]: r for r in db.execute(

@@ -1,233 +1,33 @@
 {
- "nodes": [
-  {
-   "id": "s0",
-   "type": "text",
-   "x": 0,
-   "y": 0,
-   "width": 300,
-   "height": 200,
-   "text": "## 1 \u00b7 Idea and packaging\nChat, notes\n\n**Driver:** You\n**Status:** Done",
-   "color": "4"
-  },
-  {
-   "id": "s1",
-   "type": "text",
-   "x": 360,
-   "y": 0,
-   "width": 300,
-   "height": 200,
-   "text": "## 2 \u00b7 Script\nNotes\n\n**Driver:** AI\n**Status:** Done",
-   "color": "4"
-  },
-  {
-   "id": "s2",
-   "type": "text",
-   "x": 720,
-   "y": 0,
-   "width": 300,
-   "height": 200,
-   "text": "## 3 \u00b7 Source index\nYour film and TV files\n\n**Driver:** AI\n**Status:** Done",
-   "color": "4"
-  },
-  {
-   "id": "s3",
-   "type": "text",
-   "x": 1080,
-   "y": 0,
-   "width": 300,
-   "height": 200,
-   "text": "## 4 \u00b7 Pull selects\nFinal Cut Pro\n\n**Driver:** AI\n**Status:** Done",
-   "color": "4"
-  },
-  {
-   "id": "s4",
-   "type": "text",
-   "x": 1440,
-   "y": 0,
-   "width": 300,
-   "height": 200,
-   "text": "## 5 \u00b7 Assembly cut\nFinal Cut Pro\n\n**Driver:** You\n**Status:** Waiting on you",
-   "color": "3"
-  },
-  {
-   "id": "s5",
-   "type": "text",
-   "x": 0,
-   "y": 300,
-   "width": 300,
-   "height": 200,
-   "text": "## 6 \u00b7 Graphics and captions\nMotion\n\n**Driver:** AI\n**Status:** Waiting for lock"
-  },
-  {
-   "id": "s6",
-   "type": "text",
-   "x": 360,
-   "y": 300,
-   "width": 300,
-   "height": 200,
-   "text": "## 7 \u00b7 Sound\nLogic Pro\n\n**Driver:** AI\n**Status:** Waiting for lock"
-  },
-  {
-   "id": "s7",
-   "type": "text",
-   "x": 720,
-   "y": 300,
-   "width": 300,
-   "height": 200,
-   "text": "## 8 \u00b7 Review\nFinal Cut Pro\n\n**Driver:** You\n**Status:** Not started"
-  },
-  {
-   "id": "s8",
-   "type": "text",
-   "x": 1080,
-   "y": 300,
-   "width": 300,
-   "height": 200,
-   "text": "## 9 \u00b7 Export and versions\nCompressor\n\n**Driver:** AI\n**Status:** Not started"
-  },
-  {
-   "id": "s9",
-   "type": "text",
-   "x": 1440,
-   "y": 300,
-   "width": 300,
-   "height": 200,
-   "text": "## 10 \u00b7 Thumbnail and publish\nPixelmator Pro\n\n**Driver:** AI\n**Status:** Not started"
-  },
-  {
-   "id": "proj",
-   "type": "file",
-   "file": "Projects/Sample video/Sample video.md",
-   "x": 0,
-   "y": -420,
-   "width": 480,
-   "height": 360
-  },
-  {
-   "id": "idx",
-   "type": "file",
-   "file": "Projects/Sample video/Source index.md",
-   "x": 540,
-   "y": -420,
-   "width": 660,
-   "height": 360
-  },
-  {
-   "id": "g",
-   "type": "group",
-   "label": "Thumbnail options: pick one",
-   "x": -20,
-   "y": 640,
-   "width": 1120,
-   "height": 280
-  },
-  {
-   "id": "t0",
-   "type": "file",
-   "file": "Projects/Sample video/thumbs/option-1.svg",
-   "x": 20,
-   "y": 690,
-   "width": 320,
-   "height": 180
-  },
-  {
-   "id": "t1",
-   "type": "file",
-   "file": "Projects/Sample video/thumbs/option-2.svg",
-   "x": 380,
-   "y": 690,
-   "width": 320,
-   "height": 180
-  },
-  {
-   "id": "t2",
-   "type": "file",
-   "file": "Projects/Sample video/thumbs/option-3.svg",
-   "x": 740,
-   "y": 690,
-   "width": 320,
-   "height": 180
-  }
- ],
- "edges": [
-  {
-   "id": "e1",
-   "fromNode": "s0",
-   "fromSide": "right",
-   "toNode": "s1",
-   "toSide": "left"
-  },
-  {
-   "id": "e2",
-   "fromNode": "s1",
-   "fromSide": "right",
-   "toNode": "s2",
-   "toSide": "left"
-  },
-  {
-   "id": "e3",
-   "fromNode": "s2",
-   "fromSide": "right",
-   "toNode": "s3",
-   "toSide": "left"
-  },
-  {
-   "id": "e4",
-   "fromNode": "s3",
-   "fromSide": "right",
-   "toNode": "s4",
-   "toSide": "left"
-  },
-  {
-   "id": "e5",
-   "fromNode": "s4",
-   "fromSide": "bottom",
-   "toNode": "s5",
-   "toSide": "top",
-   "label": "Picture lock"
-  },
-  {
-   "id": "e6",
-   "fromNode": "s5",
-   "fromSide": "right",
-   "toNode": "s6",
-   "toSide": "left"
-  },
-  {
-   "id": "e7",
-   "fromNode": "s6",
-   "fromSide": "right",
-   "toNode": "s7",
-   "toSide": "left"
-  },
-  {
-   "id": "e8",
-   "fromNode": "s7",
-   "fromSide": "right",
-   "toNode": "s8",
-   "toSide": "left"
-  },
-  {
-   "id": "e9",
-   "fromNode": "s8",
-   "fromSide": "right",
-   "toNode": "s9",
-   "toSide": "left"
-  },
-  {
-   "id": "ei",
-   "fromNode": "idx",
-   "fromSide": "bottom",
-   "toNode": "s2",
-   "toSide": "top"
-  },
-  {
-   "id": "et",
-   "fromNode": "s9",
-   "fromSide": "bottom",
-   "toNode": "g",
-   "toSide": "right"
-  }
- ]
+	"nodes":[
+		{"id":"s0","type":"text","x":0,"y":0,"width":300,"height":200,"text":"## 1 · Idea and packaging\nChat, notes\n\n**Driver:** You\n**Status:** Done","color":"4"},
+		{"id":"s1","type":"text","x":360,"y":0,"width":300,"height":200,"text":"## 2 · Script\nNotes\n\n**Driver:** AI\n**Status:** Done","color":"4"},
+		{"id":"s2","type":"text","x":720,"y":0,"width":300,"height":200,"text":"## 3 · Source index\nYour film and TV files\n\n**Driver:** AI\n**Status:** Done","color":"4"},
+		{"id":"s3","type":"text","x":1080,"y":0,"width":300,"height":200,"text":"## 4 · Pull selects\nFinal Cut Pro\n\n**Driver:** AI\n**Status:** Done","color":"4"},
+		{"id":"s4","type":"text","x":1440,"y":0,"width":300,"height":200,"text":"## 5 · Assembly cut\nFinal Cut Pro\n\n**Driver:** You\n**Status:** Waiting on you","color":"3"},
+		{"id":"s5","type":"text","x":0,"y":300,"width":300,"height":200,"text":"## 6 · Graphics and captions\nMotion\n\n**Driver:** AI\n**Status:** Waiting for lock"},
+		{"id":"s6","type":"text","x":360,"y":300,"width":300,"height":200,"text":"## 7 · Sound\nLogic Pro\n\n**Driver:** AI\n**Status:** Waiting for lock"},
+		{"id":"s7","type":"text","x":720,"y":300,"width":300,"height":200,"text":"## 8 · Review\nFinal Cut Pro\n\n**Driver:** You\n**Status:** Not started"},
+		{"id":"s8","type":"text","x":1080,"y":300,"width":300,"height":200,"text":"## 9 · Export and versions\nCompressor\n\n**Driver:** AI\n**Status:** Not started"},
+		{"id":"s9","type":"text","x":1440,"y":300,"width":300,"height":200,"text":"## 10 · Thumbnail and publish\nPixelmator Pro\n\n**Driver:** AI\n**Status:** Not started"},
+		{"id":"proj","type":"file","file":"Projects/Sample video/Sample video.md","x":0,"y":-420,"width":480,"height":360},
+		{"id":"idx","type":"file","file":"Projects/Sample video/Source index.md","x":540,"y":-420,"width":660,"height":360},
+		{"id":"g","type":"group","label":"Thumbnail options: pick one","x":-20,"y":640,"width":1120,"height":280},
+		{"id":"t0","type":"file","file":"Projects/Sample video/thumbs/option-1.svg","x":20,"y":690,"width":320,"height":180},
+		{"id":"t1","type":"file","file":"Projects/Sample video/thumbs/option-2.svg","x":380,"y":690,"width":320,"height":180},
+		{"id":"t2","type":"file","file":"Projects/Sample video/thumbs/option-3.svg","x":740,"y":690,"width":320,"height":180}
+	],
+	"edges":[
+		{"id":"e1","fromNode":"s0","fromSide":"right","toNode":"s1","toSide":"left"},
+		{"id":"e2","fromNode":"s1","fromSide":"right","toNode":"s2","toSide":"left"},
+		{"id":"e3","fromNode":"s2","fromSide":"right","toNode":"s3","toSide":"left"},
+		{"id":"e4","fromNode":"s3","fromSide":"right","toNode":"s4","toSide":"left"},
+		{"id":"e5","fromNode":"s4","fromSide":"bottom","toNode":"s5","toSide":"top","label":"Picture lock"},
+		{"id":"e6","fromNode":"s5","fromSide":"right","toNode":"s6","toSide":"left"},
+		{"id":"e7","fromNode":"s6","fromSide":"right","toNode":"s7","toSide":"left"},
+		{"id":"e8","fromNode":"s7","fromSide":"right","toNode":"s8","toSide":"left"},
+		{"id":"e9","fromNode":"s8","fromSide":"right","toNode":"s9","toSide":"left"},
+		{"id":"ei","fromNode":"idx","fromSide":"bottom","toNode":"s2","toSide":"top"},
+		{"id":"et","fromNode":"s9","fromSide":"bottom","toNode":"g","toSide":"right"}
+	]
 }

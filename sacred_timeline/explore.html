@@ -6,78 +6,123 @@
 <title>sacred-timeline · moment map</title>
 <style>
   :root {
-    --bg: #f7f6f2; --panel: #ffffff; --ink: #1d1d1b; --muted: #706f6a; --line: #e6e4dd; --soft: #efede7;
+    --bg: #f6f5f1; --panel: #ffffff; --ink: #1c1c1a; --muted: #73726c; --line: #e7e5de; --soft: #f0eee8;
     --accent: #3d6fe0; --accent-soft: rgba(61,111,224,.12); --warn: #c2410c;
+    --map: #0c0e12; --map-ink: #eef0f4; --map-muted: #8b93a3;
     --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
     --mono: ui-monospace, "SF Mono", Menlo, monospace;
     color-scheme: light dark;
   }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #111211; --panel: #1a1b1a; --ink: #ecebe6; --muted: #9a9993; --line: #2a2b29; --soft: #222321;
+    :root { --bg: #101112; --panel: #17181a; --ink: #ecebe6; --muted: #9a9993; --line: #26272a; --soft: #1f2023;
             --accent: #7aa2ff; --accent-soft: rgba(122,162,255,.16); }
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 13px/1.45 var(--font); }
-  .app { display: grid; grid-template-columns: 290px minmax(0, 1fr); grid-template-rows: 52px 1fr 252px; height: 100vh; }
-  header { grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; padding: 0 18px;
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 13px/1.45 var(--font);
+               -webkit-font-smoothing: antialiased; }
+  .app { display: grid; grid-template-columns: 320px minmax(0, 1fr); grid-template-rows: 52px minmax(0, 1fr) 248px; height: 100vh; }
+  header { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; padding: 0 18px;
            border-bottom: 1px solid var(--line); background: var(--panel); }
-  header h1 { font-size: 14px; font-weight: 600; margin: 0; letter-spacing: -.01em; }
+  header h1 { font-size: 14px; font-weight: 650; margin: 0; letter-spacing: -.01em; display: flex; align-items: center; gap: 8px; }
+  header h1 .mark { width: 16px; height: 16px; border-radius: 5px;
+                    background: conic-gradient(from 200deg, #6ea8ff, #b18cff, #ff6b9a, #ffd166, #4fd1a5, #6ea8ff); }
   header .stats { color: var(--muted); font-size: 12px; }
   header .spacer { flex: 1; }
-  aside { grid-row: 2 / 4; border-right: 1px solid var(--line); background: var(--panel); overflow: auto;
-          display: flex; flex-direction: column; }
+
+  aside { grid-row: 2 / 4; border-right: 1px solid var(--line); background: var(--panel); overflow: hidden;
+          display: flex; flex-direction: column; min-height: 0; }
   .section { padding: 14px 16px; border-bottom: 1px solid var(--line); }
-  .section h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
-                font-weight: 600; margin: 0 0 10px; }
-  .search { display: flex; gap: 6px; }
-  input[type=search], select { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line);
+  .section h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted);
+                font-weight: 600; margin: 0 0 9px; display: flex; align-items: center; gap: 6px; }
+  .section h2 .grow { flex: 1; }
+  input, select, textarea { width: 100%; padding: 8px 10px; border-radius: 9px; border: 1px solid var(--line);
          background: var(--bg); color: var(--ink); font: inherit; outline: none; }
-  input[type=search]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  textarea { resize: none; line-height: 1.4; }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  select { appearance: none; padding-right: 28px; cursor: pointer;
+           background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+           background-position: calc(100% - 15px) 52%, calc(100% - 10px) 52%; background-size: 5px 5px; background-repeat: no-repeat; }
   button { font: inherit; border: 1px solid var(--line); background: var(--soft); color: var(--ink);
-           border-radius: 8px; padding: 7px 11px; cursor: pointer; white-space: nowrap; }
+           border-radius: 9px; padding: 7px 11px; cursor: pointer; white-space: nowrap; }
   button.primary { background: var(--accent); border-color: var(--accent); color: white; }
+  button.ghost { background: transparent; border-color: transparent; color: var(--muted); padding: 4px 6px; }
+  button.ghost:hover { color: var(--ink); background: var(--soft); }
   button:disabled { opacity: .5; cursor: default; }
-  .hint { color: var(--muted); font-size: 12px; margin-top: 8px; }
-  .seg { display: flex; background: var(--soft); border-radius: 8px; padding: 2px; }
-  .seg button { flex: 1; border: 0; background: transparent; padding: 5px 0; border-radius: 6px; color: var(--muted); }
-  .seg button.on { background: var(--panel); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
-  .list { flex: 1; overflow: auto; padding: 6px 8px 12px; }
-  .item { display: flex; align-items: center; gap: 9px; padding: 7px 8px; border-radius: 8px; cursor: pointer; }
-  .item:hover { background: var(--soft); }
-  .item.on { background: var(--accent-soft); }
-  .swatch { width: 10px; height: 10px; border-radius: 50%; flex: none; }
-  .item .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .item .n { color: var(--muted); font: 11px var(--mono); }
-  main { position: relative; overflow: hidden; min-width: 0; }
-  canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 7px; }
+  .intent { margin-top: 9px; }
+  .intent label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .seg { display: flex; background: var(--soft); border-radius: 9px; padding: 2px; }
+  .seg button { flex: 1; border: 0; background: transparent; padding: 5px 0; border-radius: 7px; color: var(--muted); }
+  .seg button.on { background: var(--panel); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.1); }
+  .seg button[hidden] { display: none; }
+
+  .list { flex: 1; overflow: auto; padding: 4px 10px 12px; min-height: 0; }
+  .cl { position: relative; padding: 9px 10px 10px 14px; border-radius: 11px; cursor: pointer; margin-bottom: 4px;
+        border: 1px solid transparent; }
+  .cl::before { content: ""; position: absolute; left: 4px; top: 10px; bottom: 10px; width: 3px; border-radius: 3px;
+                background: var(--c); }
+  .cl:hover { background: var(--soft); }
+  .cl.on { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
+  .cl .top { display: flex; align-items: baseline; gap: 8px; padding-right: 18px; }
+  .cl .name { flex: 1; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cl .n { color: var(--muted); font: 11px var(--mono); }
+  .cl .desc { color: var(--muted); font-size: 12px; margin-top: 1px; display: -webkit-box; -webkit-line-clamp: 2;
+              -webkit-box-orient: vertical; overflow: hidden; }
+  .cl .thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; margin-top: 7px; }
+  .cl .thumbs img { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 4px; display: block; background: var(--soft); }
+  .cl .x { position: absolute; right: 4px; top: 5px; opacity: 0; }
+  .cl:hover .x { opacity: 1; }
+  .cl.flat .thumbs { display: none; }
+  .add { border: 1px dashed var(--line); border-radius: 11px; padding: 10px; margin: 6px 0 4px; display: grid; gap: 6px; }
+  .add .row { display: flex; gap: 6px; }
+  .add .row input { flex: 1; }
+
+  main { position: relative; overflow: hidden; min-width: 0;
+         background: radial-gradient(1200px 700px at 50% 40%, #161a22 0%, var(--map) 70%); }
+  main::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+                background-image: radial-gradient(rgba(255,255,255,.045) 1px, transparent 1px); background-size: 22px 22px; }
+  canvas { position: relative; z-index: 1; display: block; width: 100%; height: 100%; cursor: grab; }
   canvas.dragging { cursor: grabbing; }
-  .legend { position: absolute; left: 14px; bottom: 12px; color: var(--muted); font-size: 11px;
-            background: color-mix(in srgb, var(--panel) 85%, transparent); padding: 6px 9px; border-radius: 8px;
-            border: 1px solid var(--line); }
-  .tools { position: absolute; right: 14px; top: 12px; display: flex; gap: 6px; }
-  .tip { position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--line);
-         border-radius: 10px; padding: 6px; width: 236px; box-shadow: 0 8px 24px rgba(0,0,0,.18); display: none; z-index: 5; }
-  .tip img { width: 100%; border-radius: 6px; display: block; }
-  .tip .t1 { font-weight: 600; margin: 6px 2px 0; font-size: 12px; }
-  .tip .t2 { color: var(--muted); margin: 0 2px 2px; font-size: 11px; }
-  .drawer { grid-column: 2; min-width: 0; border-top: 1px solid var(--line); background: var(--panel); display: flex;
-            flex-direction: column; min-height: 0; }
-  .drawer .bar { display: flex; align-items: center; gap: 10px; padding: 9px 16px; border-bottom: 1px solid var(--line); }
-  .drawer .bar .title { font-weight: 600; }
-  .drawer .bar .sub { color: var(--muted); font-size: 12px; }
+  .float { position: absolute; z-index: 2; }
+  .legend { left: 14px; bottom: 12px; color: var(--map-muted); font-size: 11.5px; max-width: 60%;
+            background: rgba(14,16,20,.72); padding: 7px 10px; border-radius: 9px; border: 1px solid rgba(255,255,255,.08);
+            backdrop-filter: blur(10px); }
+  .legend .ramp { display: inline-block; width: 90px; height: 7px; border-radius: 4px; vertical-align: middle; margin: 0 6px;
+                  background: linear-gradient(90deg, #2b2f6b, #2a7ab0, #39b39a, #b7d65a, #ffe066); }
+  .tools { right: 14px; top: 12px; display: flex; gap: 6px; }
+  .tools button { background: rgba(14,16,20,.72); color: var(--map-ink); border-color: rgba(255,255,255,.1);
+                  backdrop-filter: blur(10px); }
+  .tools button.on { background: rgba(110,168,255,.22); border-color: rgba(110,168,255,.5); }
+  .lensbadge { left: 14px; top: 12px; color: var(--map-ink); background: rgba(14,16,20,.72); border: 1px solid rgba(255,255,255,.1);
+               border-radius: 9px; padding: 7px 11px; backdrop-filter: blur(10px); font-size: 12px; max-width: 55%; }
+  .lensbadge b { font-weight: 600; } .lensbadge span { color: var(--map-muted); }
+  .busy { right: 14px; bottom: 12px; color: var(--map-muted); font-size: 12px; display: none; }
+  .tip { position: absolute; z-index: 3; pointer-events: none; background: rgba(18,20,26,.94); color: var(--map-ink);
+         border: 1px solid rgba(255,255,255,.1); border-radius: 12px; padding: 6px; width: 240px;
+         box-shadow: 0 12px 32px rgba(0,0,0,.45); display: none; }
+  .tip img { width: 100%; border-radius: 7px; display: block; aspect-ratio: 16/9; object-fit: cover; }
+  .tip .t1 { font-weight: 600; margin: 7px 3px 0; font-size: 12px; }
+  .tip .t2 { color: var(--map-muted); margin: 1px 3px 3px; font-size: 11px; }
+
+  .drawer { grid-column: 2; border-top: 1px solid var(--line); background: var(--panel); display: flex;
+            flex-direction: column; min-height: 0; min-width: 0; }
+  .drawer .bar { display: flex; align-items: center; gap: 10px; padding: 9px 16px; border-bottom: 1px solid var(--line); min-height: 48px; }
+  .drawer .bar .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  .drawer .bar .title { font-weight: 600; white-space: nowrap; }
+  .drawer .bar .sub { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .strip { display: flex; gap: 10px; padding: 12px 16px; overflow-x: auto; flex: 1; }
-  .card { flex: none; width: 210px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
-          background: var(--bg); cursor: pointer; position: relative; }
-  .card:hover { border-color: var(--accent); }
+  .card { flex: none; width: 212px; border: 1px solid var(--line); border-radius: 11px; overflow: hidden;
+          background: var(--bg); cursor: pointer; position: relative; transition: transform .12s, border-color .12s; }
+  .card:hover { border-color: var(--accent); transform: translateY(-1px); }
   .card img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: #000; }
   .card .meta { padding: 7px 9px 8px; }
-  .card .clip { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .clip { font-size: 12px; font-weight: 550; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .card .tc { color: var(--muted); font: 11px var(--mono); }
   .card .tags { color: var(--muted); font-size: 11px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .badge { position: absolute; top: 7px; left: 7px; background: rgba(0,0,0,.65); color: #fff; font: 11px var(--mono);
+  .badge { position: absolute; top: 7px; left: 7px; background: rgba(0,0,0,.62); color: #fff; font: 11px var(--mono);
            padding: 2px 6px; border-radius: 6px; backdrop-filter: blur(6px); }
   .badge.judge { left: auto; right: 7px; background: var(--accent); }
-  .empty { color: var(--muted); padding: 18px 16px; }
+  .empty { color: var(--muted); padding: 22px 4px; }
   .modal { position: fixed; inset: 0; background: rgba(0,0,0,.72); display: none; align-items: center;
            justify-content: center; z-index: 10; }
   .modal.on { display: flex; }
@@ -91,45 +136,56 @@
 <body>
 <div class="app">
   <header>
-    <h1>sacred-timeline</h1>
+    <h1><span class="mark"></span>sacred-timeline</h1>
     <span class="stats" id="stats">loading…</span>
     <span class="spacer"></span>
-    <span class="stats">EmbeddingGemma 2 · UMAP · drag to pan, scroll to zoom, shift-drag to select</span>
+    <span class="stats">drag to pan · scroll to zoom · shift-drag to select</span>
   </header>
 
   <aside>
     <div class="section">
+      <h2>Lens</h2>
+      <select id="project"></select>
+      <div class="intent" id="intentBox" hidden>
+        <label for="intent">What this video is about</label>
+        <textarea id="intent" rows="2" placeholder="e.g. Confident men who are less in control than they think."></textarea>
+      </div>
+      <div class="hint" id="lensHint">Clusters found automatically in all footage.</div>
+    </div>
+    <div class="section">
       <h2>Find scenes</h2>
-      <form class="search" id="form">
-        <input type="search" id="q" placeholder="e.g. two friends arguing in a hotel" autocomplete="off">
-      </form>
+      <form id="form"><input type="search" id="q" placeholder="e.g. two friends arguing in a hotel" autocomplete="off"></form>
       <div class="hint" id="qhint">Describe a moment. Points light up by how close they are.</div>
     </div>
     <div class="section">
       <h2>Colour by</h2>
       <div class="seg" id="colorby">
         <button data-k="cluster" class="on">Cluster</button>
+        <button data-k="intent" hidden>Intent</button>
         <button data-k="clip">Source</button>
         <button data-k="emotion">Emotion</button>
       </div>
     </div>
-    <div class="section" style="border-bottom:0;padding-bottom:4px"><h2 id="listTitle">Clusters</h2></div>
+    <div class="section" style="border-bottom:0;padding-bottom:2px"><h2><span class="grow" id="listTitle">Clusters</span></h2></div>
     <div class="list" id="list"></div>
   </aside>
 
   <main id="main">
     <canvas id="cv"></canvas>
-    <div class="tools"><button id="reset">Reset view</button></div>
-    <div class="legend" id="legend"></div>
+    <div class="float lensbadge" id="lensbadge" hidden></div>
+    <div class="float tools"><button id="stills" title="Show stills on the map">Stills</button><button id="reset">Reset view</button></div>
+    <div class="float legend" id="legend"></div>
+    <div class="float busy" id="busy">Arranging…</div>
     <div class="tip" id="tip"><img id="tipimg"><div class="t1" id="tip1"></div><div class="t2" id="tip2"></div></div>
   </main>
 
   <section class="drawer">
     <div class="bar">
+      <span class="dot" id="ddot" hidden></span>
       <span class="title" id="dtitle">Nothing selected</span>
       <span class="sub" id="dsub">Click a cluster, a point, or search.</span>
-      <span class="spacer" style="flex:1"></span>
-      <button id="judge" class="primary" style="display:none">Judge with Clef-Omni</button>
+      <span style="flex:1"></span>
+      <button id="judge" class="primary" style="display:none">Check with Clef-Omni</button>
     </div>
     <div class="strip" id="strip"></div>
   </section>
@@ -144,23 +200,36 @@
 </div>
 
 <script>
-const PALETTE = ["#3d6fe0","#e0793d","#2fa37a","#c4457a","#8a63d2","#c7a12d","#3aa6c2","#d0503c","#6f8f2f","#9a6b4b",
-                 "#4f5bd5","#d27fb0","#2b8f8f","#b5652a","#5d7f9e"];
-const EMO = {happy:"#e4b42c", amused:"#e0793d", sad:"#4f7bd0", angry:"#d0453c", anxious:"#8a63d2",
-             surprised:"#2fb3b0", awkward:"#c4457a", confident:"#2fa37a"};
+const PALETTE = ["#6ea8ff","#ff9f5a","#4fd1a5","#ff6b9a","#b18cff","#ffd166","#5ad1e6","#ff7a6b","#a3d977","#e3a4ff",
+                 "#7f8cff","#f2c38b","#58c1a0","#ff8fc7","#9fb7ff"];
+const EMO = {happy:"#ffd166", amused:"#ff9f5a", sad:"#6ea8ff", angry:"#ff5d5d", anxious:"#b18cff",
+             surprised:"#5ad1e6", awkward:"#ff6b9a", confident:"#4fd1a5"};
+const GREY = "#5b6270";
+const RAMP = ["#2b2f6b", "#2a7ab0", "#39b39a", "#b7d65a", "#ffe066"];
 const $ = s => document.querySelector(s);
 const cv = $("#cv"), ctx = cv.getContext("2d");
-let M = null, byId = new Map(), colorBy = "cluster", view = {s: 1, x: 0, y: 0};
-let selection = null;   // {title, sub, ids: [...], scores?: {id: sim}}
-let search = null;      // {query, sims: {id: sim}, hits: [...]}
-let judged = {};        // id -> {score, tags}
-let hover = null, box = null;
 
-function tc(t) { const m = Math.floor(t / 60), s = (t % 60).toFixed(1).padStart(4, "0"); return `${String(m).padStart(2,"0")}:${s}`; }
-function clipName(id) { return M.clips.find(c => c.id === id)?.name ?? ""; }
+let MOM = null, byId = new Map(), idx = new Map();  // moments; id -> point; id -> row in layout
+let L = null;                // current layout (automatic map or a project lens)
+let project = "";            // "" = automatic
+let pos = [], from = null, to = null, anim = 0;  // positions (normalised), tween state
+let colorBy = "cluster", view = {s: 1, x: 0, y: 0}, stills = false;
+let selection = null, search = null, judged = {}, hover = null, hoverCluster = null, box = null;
+
+// ---------------------------------------------------------------- helpers
+const tc = t => `${String(Math.floor(t / 60)).padStart(2, "0")}:${(t % 60).toFixed(1).padStart(4, "0")}`;
+const clipName = id => MOM.clips.find(c => c.id === id)?.name ?? "";
+const clusterOf = id => L.cluster[idx.get(id)];
+const clusterColor = c => c === -2 ? "#3a3f4a" : c < 0 ? GREY : PALETTE[c % PALETTE.length];
+function rampColor(f) {
+  f = Math.max(0, Math.min(1, f)) * (RAMP.length - 1);
+  const i = Math.min(RAMP.length - 2, Math.floor(f)), t = f - i;
+  const a = RAMP[i].match(/\w\w/g).map(h => parseInt(h, 16)), b = RAMP[i + 1].match(/\w\w/g).map(h => parseInt(h, 16));
+  return "#" + a.map((v, k) => Math.round(v + (b[k] - v) * t).toString(16).padStart(2, "0")).join("");
+}
 function tagLine(t) {
-  if (!t || !t.emotion) return "not judged yet";
-  const ppl = {none:"no people", one:"1 person", two:"2 people", group:"group"}[t.people] || "";
+  if (!t || !t.emotion) return "not checked yet";
+  const ppl = {none: "no people", one: "1 person", two: "2 people", group: "group"}[t.people] || "";
   const bits = [t.emotion, ppl, t.shot && t.shot + " shot", t.setting];
   if (t.speaking >= .5 && t.voice) bits.push(t.voice + " voice");
   if (t.tension >= .5) bits.push("tense");
@@ -169,74 +238,194 @@ function tagLine(t) {
   return bits.filter(Boolean).join(" · ");
 }
 function colorOf(p) {
-  if (colorBy === "clip") return PALETTE[M.clips.findIndex(c => c.id === p.clip) % PALETTE.length];
-  if (colorBy === "emotion") { const t = judged[p.id]?.tags || p.tags; return t?.emotion ? EMO[t.emotion] : "#9a9993"; }
-  return p.cluster < 0 ? "#9a9993" : PALETTE[p.cluster % PALETTE.length];
+  if (colorBy === "clip") return PALETTE[MOM.clips.findIndex(c => c.id === p.clip) % PALETTE.length];
+  if (colorBy === "emotion") { const t = judged[p.id]?.tags || p.tags; return t?.emotion ? EMO[t.emotion] : GREY; }
+  if (colorBy === "intent" && L.intent_score) return rampColor(L.intent_score[idx.get(p.id)]);
+  return clusterColor(clusterOf(p.id));
+}
+async function api(url, body) {
+  const r = await fetch(url, body ? {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)} : {});
+  const j = await r.json();
+  if (j.error) throw new Error(j.error);
+  return j;
 }
 
-// ---------------------------------------------------------------- canvas
+// ---------------------------------------------------------------- sprites and images
+const glowCache = new Map();
+function glow(col) {
+  if (glowCache.has(col)) return glowCache.get(col);
+  const c = document.createElement("canvas"), d = devicePixelRatio || 1, r = 18;
+  c.width = c.height = 2 * r * d;
+  const g = c.getContext("2d"); g.scale(d, d);
+  const grad = g.createRadialGradient(r, r, 0, r, r, r);
+  grad.addColorStop(0, col + "aa"); grad.addColorStop(.35, col + "40"); grad.addColorStop(1, col + "00");
+  g.fillStyle = grad; g.fillRect(0, 0, 2 * r, 2 * r);
+  glowCache.set(col, c); return c;
+}
+const imgs = new Map();
+function thumb(id) {
+  if (!imgs.has(id)) { const im = new Image(); im.onload = () => requestDraw(); im.src = `/thumb/${id}`; imgs.set(id, im); }
+  const im = imgs.get(id); return im.complete && im.naturalWidth ? im : null;
+}
+
+// ---------------------------------------------------------------- geometry
+function rect() { return cv.getBoundingClientRect(); }
+function toScreen(i) {
+  const r = rect(), pad = 64, w = r.width - 2 * pad, h = r.height - 2 * pad, k = Math.min(w, h * 1.25);
+  const ox = pad + (w - k) / 2, kh = Math.min(h, k), oy = pad + (h - kh) / 2;
+  const [x, y] = pos[i];
+  return [(ox + x * k) * view.s + view.x, (oy + (1 - y) * kh) * view.s + view.y];
+}
+function hull(pts) {
+  if (pts.length < 3) return pts;
+  pts = [...pts].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lo = [], up = [];
+  for (const p of pts) { while (lo.length >= 2 && cross(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop(); lo.push(p); }
+  for (const p of pts.reverse()) { while (up.length >= 2 && cross(up[up.length - 2], up[up.length - 1], p) <= 0) up.pop(); up.push(p); }
+  return lo.slice(0, -1).concat(up.slice(0, -1));
+}
+function blob(pts, pad) {
+  // A soft rounded outline around a set of screen points: pad every point into a small ring, take the hull, smooth it.
+  const ring = [];
+  for (const p of pts) for (let a = 0; a < 10; a++) { const t = a / 10 * Math.PI * 2; ring.push([p[0] + Math.cos(t) * pad, p[1] + Math.sin(t) * pad]); }
+  const h = hull(ring), n = h.length;
+  const path = new Path2D(), mid = i => [(h[i][0] + h[(i + 1) % n][0]) / 2, (h[i][1] + h[(i + 1) % n][1]) / 2];
+  const m0 = mid(n - 1); path.moveTo(m0[0], m0[1]);
+  for (let i = 0; i < n; i++) { const m = mid(i); path.quadraticCurveTo(h[i][0], h[i][1], m[0], m[1]); }
+  path.closePath();
+  const cx = pts.reduce((s, p) => s + p[0], 0) / pts.length;
+  return {path, top: Math.min(...h.map(p => p[1])), bottom: Math.max(...h.map(p => p[1])), cx};
+}
+
+// ---------------------------------------------------------------- drawing
+let pending = false;
+function requestDraw() { if (!pending) { pending = true; requestAnimationFrame(() => { pending = false; draw(); }); } }
 function size() {
-  const r = cv.getBoundingClientRect(), d = devicePixelRatio || 1;
+  const r = rect(), d = devicePixelRatio || 1;
   cv.width = r.width * d; cv.height = r.height * d; ctx.setTransform(d, 0, 0, d, 0, 0); draw();
 }
-function toScreen(p) {
-  const r = cv.getBoundingClientRect(), pad = 48, w = r.width - 2 * pad, h = r.height - 2 * pad, k = Math.min(w, h);
-  const ox = pad + (w - k) / 2, oy = pad + (h - k) / 2;
-  return [(ox + p.x * k) * view.s + view.x, (oy + (1 - p.y) * k) * view.s + view.y];
-}
 function draw() {
-  if (!M) return;
-  const r = cv.getBoundingClientRect();
+  if (!L || !MOM) return;
+  const r = rect();
   ctx.clearRect(0, 0, r.width, r.height);
-  const sel = selection ? new Set(selection.ids) : null;
-  const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+  const P = MOM.points, sel = selection ? new Set(selection.ids) : null;
+  const scr = P.map(p => toScreen(idx.get(p.id)));
   let lo = 0, hi = 1;
   if (search) { const v = Object.values(search.sims); lo = Math.min(...v); hi = Math.max(...v); }
-  const pts = [...M.points];
-  if (search) pts.sort((a, b) => search.sims[a.id] - search.sims[b.id]);
-  for (const p of pts) {
-    const [x, y] = toScreen(p);
-    let a = 0.9, rad = 5.5, col = colorOf(p);
-    if (search) {
-      const f = (search.sims[p.id] - lo) / Math.max(hi - lo, 1e-6);
-      a = 0.12 + 0.88 * f * f; rad = 3.5 + 5 * f * f;
+  const showStills = stills || view.s >= 2.4;
+
+  // cluster outlines
+  const labels = [];
+  if (colorBy === "cluster" && !search) {
+    for (const c of L.clusters) {
+      const pts = P.map((p, i) => clusterOf(p.id) === c.id ? scr[i] : null).filter(Boolean);
+      if (!pts.length) continue;
+      const b = blob(pts, showStills ? 34 : 18), col = clusterColor(c.id);
+      const active = hoverCluster === c.id || selection?.cluster === c.id;
+      const dim = selection?.cluster != null && selection.cluster !== c.id;
+      ctx.fillStyle = col + (active ? "30" : dim ? "0a" : "18"); ctx.fill(b.path);
+      ctx.lineWidth = active ? 1.6 : 1; ctx.strokeStyle = col + (active ? "cc" : dim ? "22" : "55"); ctx.stroke(b.path);
+      labels.push({c, x: b.cx, y: b.top - 6, y2: b.bottom + 6 + 24, col, dim});
     }
-    if (sel && !sel.has(p.id)) a *= 0.22;
-    ctx.globalAlpha = a; ctx.fillStyle = col;
-    ctx.beginPath(); ctx.arc(x, y, rad, 0, 7); ctx.fill();
-    if (sel && sel.has(p.id)) {
-      ctx.globalAlpha = 1; ctx.lineWidth = 1.6; ctx.strokeStyle = dark ? "#fff" : "#1d1d1b"; ctx.stroke();
+  }
+
+  // points: glow layer, then cores (or stills)
+  const order = P.map((p, i) => i);
+  if (search) order.sort((a, b) => search.sims[P[a].id] - search.sims[P[b].id]);
+  const alphaOf = i => {
+    const p = P[i]; let a = 1;
+    if (search) { const f = (search.sims[p.id] - lo) / Math.max(hi - lo, 1e-6); a = .1 + .9 * f * f; }
+    if (sel && !sel.has(p.id)) a *= .18;
+    if (colorBy === "cluster" && clusterOf(p.id) < 0 && !search) a *= clusterOf(p.id) === -2 ? .4 : .6;
+    return a;
+  };
+  ctx.globalCompositeOperation = "lighter";
+  for (const i of order) {
+    const a = alphaOf(i); if (a < .25) continue;
+    const col = colorOf(P[i]); if (col === GREY || col === "#3a3f4a") continue;
+    const g = glow(col), [x, y] = scr[i], s = showStills ? 46 : 30;
+    ctx.globalAlpha = a * .9; ctx.drawImage(g, x - s / 2, y - s / 2, s, s);
+  }
+  ctx.globalCompositeOperation = "source-over";
+  for (const i of order) {
+    const p = P[i], [x, y] = scr[i], a = alphaOf(i), col = colorOf(p);
+    ctx.globalAlpha = a;
+    const im = showStills ? thumb(p.id) : null;
+    if (im) {
+      const w = Math.min(96, 42 * Math.max(1, view.s / 2)), h = w * 9 / 16;
+      ctx.save(); ctx.beginPath(); ctx.roundRect(x - w / 2, y - h / 2, w, h, 4); ctx.clip();
+      ctx.drawImage(im, x - w / 2, y - h / 2, w, h); ctx.restore();
+      ctx.lineWidth = 1.5; ctx.strokeStyle = col; ctx.beginPath(); ctx.roundRect(x - w / 2, y - h / 2, w, h, 4); ctx.stroke();
+    } else {
+      let rad = 3.6;
+      if (search) { const f = (search.sims[p.id] - lo) / Math.max(hi - lo, 1e-6); rad = 2.4 + 3.6 * f * f; }
+      ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, rad, 0, 7); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.beginPath(); ctx.arc(x - rad * .3, y - rad * .3, rad * .38, 0, 7); ctx.fill();
+    }
+    if (sel && sel.has(p.id) && !im) {
+      ctx.globalAlpha = 1; ctx.lineWidth = 1.3; ctx.strokeStyle = "rgba(255,255,255,.9)";
+      ctx.beginPath(); ctx.arc(x, y, 7, 0, 7); ctx.stroke();
     }
   }
   ctx.globalAlpha = 1;
-  if (colorBy === "cluster" && !search) {
-    ctx.font = "600 12px -apple-system, sans-serif"; ctx.textAlign = "center";
-    const placed = [];
-    for (const c of [...M.clusters].sort((a, b) => b.n - a.n)) {
-      const [x, y] = toScreen(c);
-      const w = ctx.measureText(c.label).width + 14;
-      const rect = [x - w / 2, y - 26, x + w / 2, y - 6];
-      if (placed.some(q => rect[0] < q[2] && rect[2] > q[0] && rect[1] < q[3] && rect[3] > q[1])) continue;
-      placed.push(rect);
-      ctx.fillStyle = dark ? "rgba(26,27,26,.82)" : "rgba(255,255,255,.86)";
-      ctx.beginPath(); ctx.roundRect(x - w / 2, y - 26, w, 20, 10); ctx.fill();
-      ctx.fillStyle = dark ? "#ecebe6" : "#1d1d1b"; ctx.fillText(c.label, x, y - 12);
-    }
+
+  // labels, biggest clusters first, skipping any that would overlap
+  ctx.textBaseline = "middle";
+  const placed = [];
+  for (const l of labels.sort((a, b) => b.c.n - a.c.n)) {
+    const text = l.c.label, cnt = String(l.c.n);
+    ctx.font = "600 12px -apple-system, sans-serif"; const tw = ctx.measureText(text).width;
+    ctx.font = "500 11px ui-monospace, SF Mono, monospace"; const cw = ctx.measureText(cnt).width;
+    const w = 26 + tw + 8 + cw + 10, h = 24, x0 = l.x - w / 2;
+    const hits = bb => placed.some(q => bb[0] < q[2] + 4 && bb[2] + 4 > q[0] && bb[1] < q[3] + 3 && bb[3] + 3 > q[1]);
+    let y0 = l.y - h, bb = [x0, y0, x0 + w, y0 + h];
+    if (hits(bb)) { y0 = l.y2 - h; bb = [x0, y0, x0 + w, y0 + h]; }  // try below the outline instead
+    if (hits(bb)) continue;
+    placed.push(bb);
+    ctx.globalAlpha = l.dim ? .35 : 1;
+    ctx.fillStyle = "rgba(16,18,24,.84)"; ctx.beginPath(); ctx.roundRect(x0, y0, w, h, 12); ctx.fill();
+    ctx.strokeStyle = l.col + "66"; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = l.col; ctx.beginPath(); ctx.arc(x0 + 13, y0 + h / 2, 4, 0, 7); ctx.fill();
+    ctx.fillStyle = "#eef0f4"; ctx.font = "600 12px -apple-system, sans-serif"; ctx.fillText(text, x0 + 23, y0 + h / 2 + .5);
+    ctx.fillStyle = "#8b93a3"; ctx.font = "500 11px ui-monospace, SF Mono, monospace"; ctx.fillText(cnt, x0 + 23 + tw + 8, y0 + h / 2 + .5);
   }
-  if (hover) { const [x, y] = toScreen(hover); ctx.lineWidth = 2; ctx.strokeStyle = colorOf(hover);
-    ctx.beginPath(); ctx.arc(x, y, 10, 0, 7); ctx.stroke(); }
-  if (box) { ctx.fillStyle = "rgba(61,111,224,.12)"; ctx.strokeStyle = "#3d6fe0"; ctx.lineWidth = 1;
-    ctx.fillRect(box.x0, box.y0, box.x1 - box.x0, box.y1 - box.y0);
-    ctx.strokeRect(box.x0, box.y0, box.x1 - box.x0, box.y1 - box.y0); }
+  ctx.globalAlpha = 1;
+
+  if (hover) {
+    const [x, y] = scr[P.indexOf(hover)];
+    ctx.lineWidth = 2; ctx.strokeStyle = "#fff"; ctx.beginPath(); ctx.arc(x, y, 10, 0, 7); ctx.stroke();
+  }
+  if (box) { ctx.fillStyle = "rgba(110,168,255,.12)"; ctx.strokeStyle = "#6ea8ff"; ctx.lineWidth = 1;
+    ctx.fillRect(box.x0, box.y0, box.x1 - box.x0, box.y1 - box.y0); ctx.strokeRect(box.x0, box.y0, box.x1 - box.x0, box.y1 - box.y0); }
 }
+
+// ---------------------------------------------------------------- layout changes (animated)
+function setLayout(next) {
+  L = next; idx = new Map(L.ids.map((id, i) => [id, i]));
+  const target = L.xy.map(p => [p[0], p[1]]);
+  if (!pos.length) { pos = target; requestDraw(); return; }
+  from = pos.map(p => [...p]); to = target; const t0 = performance.now(), dur = 750;
+  const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  cancelAnimationFrame(anim);
+  const step = now => {
+    const t = ease(Math.min(1, (now - t0) / dur));
+    pos = from.map((a, i) => [a[0] + (to[i][0] - a[0]) * t, a[1] + (to[i][1] - a[1]) * t]);
+    draw();
+    if (t < 1) anim = requestAnimationFrame(step);
+  };
+  anim = requestAnimationFrame(step);
+}
+
+// ---------------------------------------------------------------- interaction
 function nearest(mx, my) {
-  let best = null, bd = 14 * 14;
-  for (const p of M.points) { const [x, y] = toScreen(p), d = (x - mx) ** 2 + (y - my) ** 2; if (d < bd) { bd = d; best = p; } }
+  let best = null, bd = 16 * 16;
+  for (const p of MOM.points) { const [x, y] = toScreen(idx.get(p.id)), d = (x - mx) ** 2 + (y - my) ** 2; if (d < bd) { bd = d; best = p; } }
   return best;
 }
 let drag = null;
 cv.addEventListener("mousedown", e => {
-  const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+  const r = rect(), mx = e.clientX - r.left, my = e.clientY - r.top;
   if (e.shiftKey) box = {x0: mx, y0: my, x1: mx, y1: my};
   else drag = {x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, moved: false};
   cv.classList.add("dragging");
@@ -245,133 +434,197 @@ addEventListener("mouseup", e => {
   cv.classList.remove("dragging");
   if (box) {
     const xs = [box.x0, box.x1].sort((a, b) => a - b), ys = [box.y0, box.y1].sort((a, b) => a - b);
-    const ids = M.points.filter(p => { const [x, y] = toScreen(p); return x >= xs[0] && x <= xs[1] && y >= ys[0] && y <= ys[1]; }).map(p => p.id);
+    const ids = MOM.points.filter(p => { const [x, y] = toScreen(idx.get(p.id)); return x >= xs[0] && x <= xs[1] && y >= ys[0] && y <= ys[1]; }).map(p => p.id);
     box = null;
-    if (ids.length) select({title: `${ids.length} selected`, sub: "box selection", ids});
-    else draw();
+    if (ids.length) select({title: `${ids.length} selected`, sub: "box selection", ids}); else draw();
     return;
   }
   if (drag && !drag.moved && e.target === cv) {
-    const r = cv.getBoundingClientRect(), p = nearest(e.clientX - r.left, e.clientY - r.top);
-    if (p) {
-      if (p.cluster >= 0) selectCluster(p.cluster, p.id);
-      else select({title: "Unclustered moment", sub: clipName(p.clip), ids: [p.id]});
-    }
+    const r = rect(), p = nearest(e.clientX - r.left, e.clientY - r.top);
+    if (p) { const c = clusterOf(p.id); if (c >= 0) selectCluster(c); else select({title: "Unassigned moment", sub: clipName(p.clip), ids: [p.id]}); }
+    else if (selection) { selection = null; renderList(); renderStrip(); draw(); }
   }
   drag = null;
 });
 addEventListener("mousemove", e => {
-  const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
-  if (box) { box.x1 = mx; box.y1 = my; draw(); return; }
+  const r = rect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+  if (box) { box.x1 = mx; box.y1 = my; requestDraw(); return; }
   if (drag) {
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
     if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
-    view.x = drag.vx + dx; view.y = drag.vy + dy; draw(); return;
+    view.x = drag.vx + dx; view.y = drag.vy + dy; requestDraw(); return;
   }
-  if (e.target !== cv) return;
+  if (e.target !== cv || !MOM) return;
   const p = nearest(mx, my);
-  if (p !== hover) { hover = p; draw(); }
+  if (p !== hover) { hover = p; requestDraw(); }
   const tip = $("#tip");
   if (!p) { tip.style.display = "none"; return; }
   $("#tipimg").src = `/thumb/${p.id}`;
-  $("#tip1").textContent = clipName(p.clip);
+  const c = clusterOf(p.id);
+  $("#tip1").textContent = (c >= 0 ? L.clusters[c].label + " · " : "") + clipName(p.clip);
   const sim = search ? ` · sim ${search.sims[p.id].toFixed(2)}` : "";
   $("#tip2").textContent = `${tc(p.t0)}–${tc(p.t1)}${sim} · ${tagLine(judged[p.id]?.tags || p.tags)}`;
   tip.style.display = "block";
-  const tw = 250, th = 190;
-  tip.style.left = Math.min(mx + 16, r.width - tw) + "px";
-  tip.style.top = (my + 16 + th > r.height ? my - th - 8 : my + 16) + "px";
+  tip.style.left = Math.min(mx + 18, r.width - 254) + "px";
+  tip.style.top = (my + 18 + 200 > r.height ? my - 200 - 8 : my + 18) + "px";
 });
-cv.addEventListener("mouseleave", () => { hover = null; $("#tip").style.display = "none"; draw(); });
+cv.addEventListener("mouseleave", () => { hover = null; $("#tip").style.display = "none"; requestDraw(); });
 cv.addEventListener("wheel", e => {
   e.preventDefault();
-  const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
-  const k = Math.exp(-e.deltaY * 0.0015), s = Math.min(20, Math.max(0.5, view.s * k)), f = s / view.s;
-  view.x = mx - (mx - view.x) * f; view.y = my - (my - view.y) * f; view.s = s; draw();
+  const r = rect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+  const s = Math.min(24, Math.max(.5, view.s * Math.exp(-e.deltaY * .0015))), f = s / view.s;
+  view.x = mx - (mx - view.x) * f; view.y = my - (my - view.y) * f; view.s = s; requestDraw();
 }, {passive: false});
 $("#reset").onclick = () => { view = {s: 1, x: 0, y: 0}; draw(); };
+$("#stills").onclick = () => { stills = !stills; $("#stills").classList.toggle("on", stills); draw(); };
 new ResizeObserver(size).observe($("#main"));
 
 // ---------------------------------------------------------------- sidebar
 function renderList() {
   const list = $("#list"); list.innerHTML = "";
-  let items;
+  const items = [];
   if (colorBy === "clip") {
     $("#listTitle").textContent = "Sources";
-    items = M.clips.map((c, i) => ({key: c.id, name: c.name, n: M.points.filter(p => p.clip === c.id).length,
-      color: PALETTE[i % PALETTE.length], ids: M.points.filter(p => p.clip === c.id).map(p => p.id)}));
+    MOM.clips.forEach((c, i) => { const ids = MOM.points.filter(p => p.clip === c.id).map(p => p.id);
+      items.push({key: "clip:" + c.id, name: c.name, n: ids.length, color: PALETTE[i % PALETTE.length], ids, flat: true}); });
   } else if (colorBy === "emotion") {
-    $("#listTitle").textContent = "Emotions (judged moments)";
-    const groups = {};
-    for (const p of M.points) { const t = judged[p.id]?.tags || p.tags; const e = t?.emotion || "not judged";
-      (groups[e] ||= []).push(p.id); }
-    items = Object.entries(groups).sort((a, b) => b[1].length - a[1].length)
-      .map(([e, ids]) => ({key: e, name: e, n: ids.length, color: EMO[e] || "#9a9993", ids}));
+    $("#listTitle").textContent = "Emotions (checked moments)";
+    const g = {};
+    for (const p of MOM.points) { const e = (judged[p.id]?.tags || p.tags)?.emotion || "not checked"; (g[e] ||= []).push(p.id); }
+    Object.entries(g).sort((a, b) => b[1].length - a[1].length)
+      .forEach(([e, ids]) => items.push({key: "emo:" + e, name: e, n: ids.length, color: EMO[e] || GREY, ids, flat: true}));
   } else {
-    $("#listTitle").textContent = "Clusters";
-    items = M.clusters.map(c => ({key: c.id, name: c.label, n: c.n, color: PALETTE[c.id % PALETTE.length],
-      ids: M.points.filter(p => p.cluster === c.id).map(p => p.id)}));
-    const noise = M.points.filter(p => p.cluster < 0).map(p => p.id);
-    if (noise.length) items.push({key: -1, name: "Unclustered", n: noise.length, color: "#9a9993", ids: noise});
+    $("#listTitle").textContent = project ? `Clusters for ${project}` : "Clusters found in the footage";
+    for (const c of L.clusters) items.push({key: "c:" + c.id, cluster: c.id, name: c.label, desc: c.description, n: c.n,
+      color: clusterColor(c.id), ids: MOM.points.filter(p => clusterOf(p.id) === c.id).map(p => p.id), samples: c.samples});
+    const rest = MOM.points.filter(p => clusterOf(p.id) === -1).map(p => p.id);
+    if (rest.length) items.push({key: "c:-1", cluster: -1, name: project ? "Doesn't fit this lens" : "Unclustered",
+      desc: project ? "Moments that stand out for none of these clusters." : "", n: rest.length, color: GREY, ids: rest, samples: rest.slice(0, 4)});
+    const cardsIds = MOM.points.filter(p => clusterOf(p.id) === -2).map(p => p.id);
+    if (cardsIds.length) items.push({key: "c:-2", cluster: -2, name: "End cards and promos", desc: "Set aside: not footage from the film.",
+      n: cardsIds.length, color: "#3a3f4a", ids: cardsIds, samples: cardsIds.slice(0, 4)});
   }
   for (const it of items) {
     const el = document.createElement("div");
-    el.className = "item" + (selection?.key === `${colorBy}:${it.key}` ? " on" : "");
-    el.innerHTML = `<span class="swatch" style="background:${it.color}"></span><span class="name"></span><span class="n">${it.n}</span>`;
+    el.className = "cl" + (selection?.key === it.key ? " on" : "") + (it.flat ? " flat" : "");
+    el.style.setProperty("--c", it.color);
+    el.innerHTML = `<div class="top"><span class="name"></span><span class="n">${it.n}</span></div>
+      ${it.desc ? '<div class="desc"></div>' : ""}<div class="thumbs"></div>`;
     el.querySelector(".name").textContent = it.name;
-    el.onclick = () => select({key: `${colorBy}:${it.key}`, title: it.name, sub: `${it.n} moments`, ids: it.ids});
+    if (it.desc) el.querySelector(".desc").textContent = it.desc;
+    for (const id of (it.samples || []).slice(0, 4)) { const im = document.createElement("img"); im.loading = "lazy"; im.src = `/thumb/${id}`; el.querySelector(".thumbs").appendChild(im); }
+    if (project && it.cluster >= 0 && colorBy === "cluster") {
+      const x = document.createElement("button"); x.className = "ghost x"; x.textContent = "✕"; x.title = "Remove this cluster";
+      x.onclick = ev => { ev.stopPropagation(); editLens({remove: it.name}); };
+      el.appendChild(x);
+    }
+    el.onclick = () => select({key: it.key, cluster: it.cluster, title: it.name, sub: it.desc || `${it.n} moments`, ids: it.ids, color: it.color});
+    el.onmouseenter = () => { hoverCluster = it.cluster ?? null; requestDraw(); };
+    el.onmouseleave = () => { hoverCluster = null; requestDraw(); };
     list.appendChild(el);
+  }
+  if (project && colorBy === "cluster") {
+    const add = document.createElement("form"); add.className = "add";
+    add.innerHTML = `<input name="label" placeholder="New cluster, e.g. Payback" required>
+      <div class="row"><input name="desc" placeholder="What belongs in it"><button class="primary">Add</button></div>`;
+    add.onsubmit = e => { e.preventDefault(); editLens({add: {label: add.label.value, description: add.desc.value}}); };
+    list.appendChild(add);
   }
 }
 function selectCluster(cid) {
-  const c = M.clusters.find(c => c.id === cid);
-  const ids = M.points.filter(p => p.cluster === cid).map(p => p.id);
-  select({key: `cluster:${cid}`, title: c.label, sub: `cluster · ${ids.length} moments`, ids});
+  const c = L.clusters[cid], ids = MOM.points.filter(p => clusterOf(p.id) === cid).map(p => p.id);
+  select({key: "c:" + cid, cluster: cid, title: c.label, sub: c.description || `${ids.length} moments`, ids, color: clusterColor(cid)});
 }
 document.querySelectorAll("#colorby button").forEach(b => b.onclick = () => {
   document.querySelectorAll("#colorby button").forEach(x => x.classList.toggle("on", x === b));
   colorBy = b.dataset.k; renderList(); legend(); draw();
 });
 function legend() {
-  $("#legend").textContent = search
-    ? `Brighter and bigger = closer to “${search.query}”`
-    : {cluster: "Nearby points look and sound alike. Labels are the closest of a fixed set of scene descriptions.",
-       clip: "Coloured by source file.", emotion: "Coloured by Clef-Omni's emotion read; grey = not judged yet."}[colorBy];
+  const el = $("#legend");
+  if (search) { el.textContent = `Brighter and bigger = closer to “${search.query}”`; return; }
+  if (colorBy === "intent") { el.innerHTML = `Fit with the intent: low<span class="ramp"></span>high`; return; }
+  el.textContent = {cluster: project ? "Grouped by this project's clusters; grey points fit none of them. Zoom in to see stills."
+                                     : "Nearby points look and sound alike. Zoom in to see stills.",
+                    clip: "Coloured by source file.", emotion: "Coloured by Clef-Omni's emotion read; grey = not checked yet."}[colorBy];
 }
+
+// ---------------------------------------------------------------- lens
+async function loadProjects() {
+  const ps = await api("/api/projects"), sel = $("#project");
+  sel.innerHTML = "";
+  sel.add(new Option("All footage · automatic clusters", ""));
+  for (const p of ps) sel.add(new Option(`${p.project}${p.n ? ` · ${p.n} clusters` : " · no clusters yet"}`, p.project));
+  sel.value = project;
+}
+async function openLens(p) {
+  project = p; selection = null; busy(true);
+  try { setLayout(await api(`/api/map${p ? `?project=${encodeURIComponent(p)}` : ""}`)); }
+  catch (e) { $("#lensHint").innerHTML = `<span class="err">${e.message}</span>`; busy(false); return; }
+  busy(false);
+  $("#intentBox").hidden = !p; $("#intent").value = L.intent || "";
+  document.querySelector('#colorby [data-k="intent"]').hidden = !p;
+  if (!p && colorBy === "intent") document.querySelector('#colorby [data-k="cluster"]').click();
+  $("#lensHint").textContent = p ? (L.clusters.length ? "Clusters from this project's Clusters.md note. Add your own below."
+                                                       : "No clusters yet. Add the kinds of moments this video needs below.")
+                                 : "Clusters found automatically in all footage.";
+  const b = $("#lensbadge"); b.hidden = !p;
+  if (p) { b.innerHTML = "<b></b> <span></span>"; b.querySelector("b").textContent = p;
+           b.querySelector("span").textContent = L.intent ? `· ${L.intent}` : ""; }
+  renderList(); renderStrip(); legend(); draw();
+}
+async function editLens(change) {
+  busy(true);
+  try { setLayout(await api("/api/lens", {project, ...change})); await loadProjects(); }
+  catch (e) { $("#lensHint").innerHTML = `<span class="err">${e.message}</span>`; }
+  busy(false); selection = null; $("#intent").value = L.intent || "";
+  const s = $("#lensbadge span"); if (s) s.textContent = L.intent ? `· ${L.intent}` : "";
+  renderList(); renderStrip(); draw();
+}
+function busy(on) { $("#busy").style.display = on ? "block" : "none"; }
+$("#project").onchange = e => openLens(e.target.value);
+$("#intent").addEventListener("change", e => editLens({intent: e.target.value}));
+$("#intent").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); e.target.blur(); } });
 
 // ---------------------------------------------------------------- drawer
 function select(s) {
-  selection = s; search && !s.fromSearch && clearSearch(false);
+  selection = s; if (search && !s.fromSearch) clearSearch(false);
   renderList(); renderStrip(); draw();
+}
+function judgeQuery() {
+  if (!selection) return null;
+  if (selection.fromSearch) return search.query;
+  if (project && selection.cluster >= 0) { const c = L.clusters[selection.cluster]; return c.description ? `${c.label}: ${c.description}` : c.label; }
+  return null;
 }
 function renderStrip() {
   const strip = $("#strip"); strip.innerHTML = "";
-  if (!selection) { $("#dtitle").textContent = "Nothing selected"; $("#dsub").textContent = "Click a cluster, a point, or search."; $("#judge").style.display = "none"; return; }
+  const dot = $("#ddot");
+  if (!selection) { $("#dtitle").textContent = "Nothing selected"; $("#dsub").textContent = "Click a cluster, a point, or search."; $("#judge").style.display = "none"; dot.hidden = true; return; }
   $("#dtitle").textContent = selection.title; $("#dsub").textContent = selection.sub;
-  $("#judge").style.display = selection.fromSearch ? "" : "none";
+  dot.hidden = !selection.color; if (selection.color) dot.style.background = selection.color;
+  const q = judgeQuery(); $("#judge").style.display = q ? "" : "none";
   let ids = [...selection.ids];
-  if (selection.fromSearch) {
-    const j = id => judged[id]?.[`q:${search.query}`];
-    if (ids.some(id => j(id) != null)) ids.sort((a, b) => (j(b) ?? -1) - (j(a) ?? -1));
-  } else ids.sort((a, b) => byId.get(a).clip - byId.get(b).clip || byId.get(a).t0 - byId.get(b).t0);
+  const js = id => q ? judged[id]?.[`q:${q}`] : null;
+  if (ids.some(id => js(id) != null)) ids.sort((a, b) => (js(b) ?? -1) - (js(a) ?? -1));
+  else if (L.cluster_sim && selection.cluster >= 0) ids.sort((a, b) => L.cluster_sim[idx.get(b)] - L.cluster_sim[idx.get(a)]);
+  else if (!selection.fromSearch) ids.sort((a, b) => byId.get(a).clip - byId.get(b).clip || byId.get(a).t0 - byId.get(b).t0);
+  if (!ids.length) { strip.innerHTML = `<div class="empty">No moments here yet.</div>`; return; }
   for (const id of ids) {
-    const p = byId.get(id), card = document.createElement("div");
-    card.className = "card";
+    const p = byId.get(id), card = document.createElement("div"); card.className = "card";
     const sim = selection.fromSearch ? `<span class="badge">sim ${search.sims[id].toFixed(2)}</span>` : "";
-    const js = selection.fromSearch ? judged[id]?.[`q:${search.query}`] : null;
-    const jb = js != null ? `<span class="badge judge">${Math.round(js * 100)}% match</span>` : "";
+    const j = js(id), jb = j != null ? `<span class="badge judge">${Math.round(j * 100)}% fit</span>` : "";
     card.innerHTML = `<img loading="lazy" src="/thumb/${id}">${sim}${jb}<div class="meta"><div class="clip"></div>
       <div class="tc">${tc(p.t0)} – ${tc(p.t1)}</div><div class="tags"></div></div>`;
     card.querySelector(".clip").textContent = clipName(p.clip);
     card.querySelector(".tags").textContent = tagLine(judged[id]?.tags || p.tags);
     card.onclick = () => play(p);
-    card.onmouseenter = () => { hover = p; draw(); };
+    card.onmouseenter = () => { hover = p; requestDraw(); };
     strip.appendChild(card);
   }
 }
 function play(p) {
   const v = $("#video");
-  v.src = `/video/${p.id}#t=${Math.max(0, p.t0 - 0.5)},${p.t1 + 0.5}`;
+  v.src = `/video/${p.id}#t=${Math.max(0, p.t0 - .5)},${p.t1 + .5}`;
   $("#vt").textContent = clipName(p.clip); $("#vs").textContent = `${tc(p.t0)} – ${tc(p.t1)} · ${tagLine(judged[p.id]?.tags || p.tags)}`;
   $("#modal").classList.add("on"); v.play().catch(() => {});
 }
@@ -387,38 +640,43 @@ $("#form").onsubmit = async e => {
   const q = $("#q").value.trim();
   if (!q) { clearSearch(); selection = null; renderStrip(); return; }
   $("#qhint").textContent = "Searching…";
-  const r = await fetch(`/api/search?q=${encodeURIComponent(q)}`).then(r => r.json());
-  if (r.error) { $("#qhint").innerHTML = `<span class="err">${r.error}</span>`; return; }
-  search = {query: q, sims: r.sims, hits: r.hits};
-  $("#qhint").textContent = `Compared with all ${M.points.length} moments in ${r.ms} ms.`;
-  selection = {fromSearch: true, title: `“${q}”`, sub: `top ${r.hits.length} by embedding similarity`, ids: r.hits.map(h => h.id)};
-  legend(); renderList(); renderStrip(); draw();
+  try {
+    const r = await api(`/api/search?q=${encodeURIComponent(q)}`);
+    search = {query: q, sims: r.sims, hits: r.hits};
+    $("#qhint").textContent = `Compared with all ${MOM.points.length} moments in ${r.ms} ms.`;
+    selection = {fromSearch: true, title: `“${q}”`, sub: `top ${r.hits.length} by embedding similarity`, ids: r.hits.map(h => h.id)};
+    legend(); renderList(); renderStrip(); draw();
+  } catch (err) { $("#qhint").innerHTML = `<span class="err">${err.message}</span>`; }
 };
 $("#q").addEventListener("input", e => {
   if (!e.target.value && search) { clearSearch(false); selection = null; renderStrip(); renderList(); draw(); }
 });
 $("#judge").onclick = async () => {
-  const b = $("#judge"), q = search.query, ids = selection.ids;
-  b.disabled = true; b.textContent = `Judging ${ids.length} moments…`;
-  const r = await fetch(`/api/judge?q=${encodeURIComponent(q)}&ids=${ids.join(",")}`).then(r => r.json());
-  b.disabled = false; b.textContent = "Judge with Clef-Omni";
-  if (r.error) { $("#dsub").innerHTML = `<span class="err">${r.error}</span>`; return; }
-  for (const [id, v] of Object.entries(r.results)) {
-    judged[id] = {...(judged[id] || {}), tags: v.tags, [`q:${q}`]: v.score};
-    const p = byId.get(+id); if (p) p.tags = v.tags;
-  }
-  selection.sub = `top ${ids.length}, re-ranked by Clef-Omni in ${r.seconds} s`;
+  const b = $("#judge"), q = judgeQuery(), ids = selection.ids.slice(0, 32);
+  b.disabled = true; b.textContent = `Checking ${ids.length} moments…`;
+  try {
+    const r = await api(`/api/judge?q=${encodeURIComponent(q)}&ids=${ids.join(",")}`);
+    for (const [id, v] of Object.entries(r.results)) {
+      judged[id] = {...(judged[id] || {}), tags: v.tags, [`q:${q}`]: v.score};
+      const p = byId.get(+id); if (p) p.tags = v.tags;
+    }
+    selection.sub = `${ids.length} moments checked by Clef-Omni in ${r.seconds} s`;
+  } catch (err) { $("#dsub").innerHTML = `<span class="err">${err.message}</span>`; }
+  b.disabled = false; b.textContent = "Check with Clef-Omni";
   renderStrip(); renderList(); draw();
 };
 
 // ---------------------------------------------------------------- boot
 (async () => {
-  M = await fetch("/api/map").then(r => r.json());
-  if (M.error) { $("#stats").innerHTML = `<span class="err">${M.error}</span>`; return; }
-  M.points.forEach(p => byId.set(p.id, p));
-  const mins = M.points.reduce((s, p) => s + (p.t1 - p.t0), 0) / 60;
-  $("#stats").textContent = `${M.points.length} moments · ${M.clips.length} sources · ${mins.toFixed(1)} min · ${M.clusters.length} clusters`;
-  renderList(); legend(); size();
+  try {
+    MOM = await api("/api/moments");
+    MOM.points.forEach(p => byId.set(p.id, p));
+    const mins = MOM.points.reduce((s, p) => s + (p.t1 - p.t0), 0) / 60;
+    $("#stats").textContent = `${MOM.points.length} moments · ${MOM.clips.length} sources · ${mins.toFixed(1)} min`;
+    await loadProjects();
+    size();
+    await openLens("");
+  } catch (e) { $("#stats").innerHTML = `<span class="err">${e.message}</span>`; }
 })();
 </script>
 </body>
