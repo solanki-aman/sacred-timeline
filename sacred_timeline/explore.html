@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sacred-timeline · moment map</title>
+<style>
+  :root {
+    --bg: #f7f6f2; --panel: #ffffff; --ink: #1d1d1b; --muted: #706f6a; --line: #e6e4dd; --soft: #efede7;
+    --accent: #3d6fe0; --accent-soft: rgba(61,111,224,.12); --warn: #c2410c;
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #111211; --panel: #1a1b1a; --ink: #ecebe6; --muted: #9a9993; --line: #2a2b29; --soft: #222321;
+            --accent: #7aa2ff; --accent-soft: rgba(122,162,255,.16); }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 13px/1.45 var(--font); }
+  .app { display: grid; grid-template-columns: 290px minmax(0, 1fr); grid-template-rows: 52px 1fr 252px; height: 100vh; }
+  header { grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; padding: 0 18px;
+           border-bottom: 1px solid var(--line); background: var(--panel); }
+  header h1 { font-size: 14px; font-weight: 600; margin: 0; letter-spacing: -.01em; }
+  header .stats { color: var(--muted); font-size: 12px; }
+  header .spacer { flex: 1; }
+  aside { grid-row: 2 / 4; border-right: 1px solid var(--line); background: var(--panel); overflow: auto;
+          display: flex; flex-direction: column; }
+  .section { padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  .section h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
+                font-weight: 600; margin: 0 0 10px; }
+  .search { display: flex; gap: 6px; }
+  input[type=search], select { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line);
+         background: var(--bg); color: var(--ink); font: inherit; outline: none; }
+  input[type=search]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  button { font: inherit; border: 1px solid var(--line); background: var(--soft); color: var(--ink);
+           border-radius: 8px; padding: 7px 11px; cursor: pointer; white-space: nowrap; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: white; }
+  button:disabled { opacity: .5; cursor: default; }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 8px; }
+  .seg { display: flex; background: var(--soft); border-radius: 8px; padding: 2px; }
+  .seg button { flex: 1; border: 0; background: transparent; padding: 5px 0; border-radius: 6px; color: var(--muted); }
+  .seg button.on { background: var(--panel); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .list { flex: 1; overflow: auto; padding: 6px 8px 12px; }
+  .item { display: flex; align-items: center; gap: 9px; padding: 7px 8px; border-radius: 8px; cursor: pointer; }
+  .item:hover { background: var(--soft); }
+  .item.on { background: var(--accent-soft); }
+  .swatch { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  .item .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item .n { color: var(--muted); font: 11px var(--mono); }
+  main { position: relative; overflow: hidden; min-width: 0; }
+  canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+  canvas.dragging { cursor: grabbing; }
+  .legend { position: absolute; left: 14px; bottom: 12px; color: var(--muted); font-size: 11px;
+            background: color-mix(in srgb, var(--panel) 85%, transparent); padding: 6px 9px; border-radius: 8px;
+            border: 1px solid var(--line); }
+  .tools { position: absolute; right: 14px; top: 12px; display: flex; gap: 6px; }
+  .tip { position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--line);
+         border-radius: 10px; padding: 6px; width: 236px; box-shadow: 0 8px 24px rgba(0,0,0,.18); display: none; z-index: 5; }
+  .tip img { width: 100%; border-radius: 6px; display: block; }
+  .tip .t1 { font-weight: 600; margin: 6px 2px 0; font-size: 12px; }
+  .tip .t2 { color: var(--muted); margin: 0 2px 2px; font-size: 11px; }
+  .drawer { grid-column: 2; min-width: 0; border-top: 1px solid var(--line); background: var(--panel); display: flex;
+            flex-direction: column; min-height: 0; }
+  .drawer .bar { display: flex; align-items: center; gap: 10px; padding: 9px 16px; border-bottom: 1px solid var(--line); }
+  .drawer .bar .title { font-weight: 600; }
+  .drawer .bar .sub { color: var(--muted); font-size: 12px; }
+  .strip { display: flex; gap: 10px; padding: 12px 16px; overflow-x: auto; flex: 1; }
+  .card { flex: none; width: 210px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+          background: var(--bg); cursor: pointer; position: relative; }
+  .card:hover { border-color: var(--accent); }
+  .card img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: #000; }
+  .card .meta { padding: 7px 9px 8px; }
+  .card .clip { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .tc { color: var(--muted); font: 11px var(--mono); }
+  .card .tags { color: var(--muted); font-size: 11px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .badge { position: absolute; top: 7px; left: 7px; background: rgba(0,0,0,.65); color: #fff; font: 11px var(--mono);
+           padding: 2px 6px; border-radius: 6px; backdrop-filter: blur(6px); }
+  .badge.judge { left: auto; right: 7px; background: var(--accent); }
+  .empty { color: var(--muted); padding: 18px 16px; }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.72); display: none; align-items: center;
+           justify-content: center; z-index: 10; }
+  .modal.on { display: flex; }
+  .modal .box { width: min(960px, 92vw); background: var(--panel); border-radius: 14px; overflow: hidden; }
+  .modal video { width: 100%; max-height: 70vh; background: #000; display: block; }
+  .modal .cap { padding: 10px 14px; display: flex; gap: 12px; align-items: center; }
+  .modal .cap .sub { color: var(--muted); }
+  .err { color: var(--warn); }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>sacred-timeline</h1>
+    <span class="stats" id="stats">loading…</span>
+    <span class="spacer"></span>
+    <span class="stats">EmbeddingGemma 2 · UMAP · drag to pan, scroll to zoom, shift-drag to select</span>
+  </header>
+
+  <aside>
+    <div class="section">
+      <h2>Find scenes</h2>
+      <form class="search" id="form">
+        <input type="search" id="q" placeholder="e.g. two friends arguing in a hotel" autocomplete="off">
+      </form>
+      <div class="hint" id="qhint">Describe a moment. Points light up by how close they are.</div>
+    </div>
+    <div class="section">
+      <h2>Colour by</h2>
+      <div class="seg" id="colorby">
+        <button data-k="cluster" class="on">Cluster</button>
+        <button data-k="clip">Source</button>
+        <button data-k="emotion">Emotion</button>
+      </div>
+    </div>
+    <div class="section" style="border-bottom:0;padding-bottom:4px"><h2 id="listTitle">Clusters</h2></div>
+    <div class="list" id="list"></div>
+  </aside>
+
+  <main id="main">
+    <canvas id="cv"></canvas>
+    <div class="tools"><button id="reset">Reset view</button></div>
+    <div class="legend" id="legend"></div>
+    <div class="tip" id="tip"><img id="tipimg"><div class="t1" id="tip1"></div><div class="t2" id="tip2"></div></div>
+  </main>
+
+  <section class="drawer">
+    <div class="bar">
+      <span class="title" id="dtitle">Nothing selected</span>
+      <span class="sub" id="dsub">Click a cluster, a point, or search.</span>
+      <span class="spacer" style="flex:1"></span>
+      <button id="judge" class="primary" style="display:none">Judge with Clef-Omni</button>
+    </div>
+    <div class="strip" id="strip"></div>
+  </section>
+</div>
+
+<div class="modal" id="modal">
+  <div class="box">
+    <video id="video" controls playsinline></video>
+    <div class="cap"><strong id="vt"></strong><span class="sub" id="vs"></span><span style="flex:1"></span>
+      <button id="vclose">Close</button></div>
+  </div>
+</div>
+
+<script>
+const PALETTE = ["#3d6fe0","#e0793d","#2fa37a","#c4457a","#8a63d2","#c7a12d","#3aa6c2","#d0503c","#6f8f2f","#9a6b4b",
+                 "#4f5bd5","#d27fb0","#2b8f8f","#b5652a","#5d7f9e"];
+const EMO = {happy:"#e4b42c", amused:"#e0793d", sad:"#4f7bd0", angry:"#d0453c", anxious:"#8a63d2",
+             surprised:"#2fb3b0", awkward:"#c4457a", confident:"#2fa37a"};
+const $ = s => document.querySelector(s);
+const cv = $("#cv"), ctx = cv.getContext("2d");
+let M = null, byId = new Map(), colorBy = "cluster", view = {s: 1, x: 0, y: 0};
+let selection = null;   // {title, sub, ids: [...], scores?: {id: sim}}
+let search = null;      // {query, sims: {id: sim}, hits: [...]}
+let judged = {};        // id -> {score, tags}
+let hover = null, box = null;
+
+function tc(t) { const m = Math.floor(t / 60), s = (t % 60).toFixed(1).padStart(4, "0"); return `${String(m).padStart(2,"0")}:${s}`; }
+function clipName(id) { return M.clips.find(c => c.id === id)?.name ?? ""; }
+function tagLine(t) {
+  if (!t || !t.emotion) return "not judged yet";
+  const ppl = {none:"no people", one:"1 person", two:"2 people", group:"group"}[t.people] || "";
+  const bits = [t.emotion, ppl, t.shot && t.shot + " shot", t.setting];
+  if (t.speaking >= .5 && t.voice) bits.push(t.voice + " voice");
+  if (t.tension >= .5) bits.push("tense");
+  if (t.funny >= .5) bits.push("funny");
+  if (t.footage < .5) bits.unshift("end card");
+  return bits.filter(Boolean).join(" · ");
+}
+function colorOf(p) {
+  if (colorBy === "clip") return PALETTE[M.clips.findIndex(c => c.id === p.clip) % PALETTE.length];
+  if (colorBy === "emotion") { const t = judged[p.id]?.tags || p.tags; return t?.emotion ? EMO[t.emotion] : "#9a9993"; }
+  return p.cluster < 0 ? "#9a9993" : PALETTE[p.cluster % PALETTE.length];
+}
+
+// ---------------------------------------------------------------- canvas
+function size() {
+  const r = cv.getBoundingClientRect(), d = devicePixelRatio || 1;
+  cv.width = r.width * d; cv.height = r.height * d; ctx.setTransform(d, 0, 0, d, 0, 0); draw();
+}
+function toScreen(p) {
+  const r = cv.getBoundingClientRect(), pad = 48, w = r.width - 2 * pad, h = r.height - 2 * pad, k = Math.min(w, h);
+  const ox = pad + (w - k) / 2, oy = pad + (h - k) / 2;
+  return [(ox + p.x * k) * view.s + view.x, (oy + (1 - p.y) * k) * view.s + view.y];
+}
+function draw() {
+  if (!M) return;
+  const r = cv.getBoundingClientRect();
+  ctx.clearRect(0, 0, r.width, r.height);
+  const sel = selection ? new Set(selection.ids) : null;
+  const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+  let lo = 0, hi = 1;
+  if (search) { const v = Object.values(search.sims); lo = Math.min(...v); hi = Math.max(...v); }
+  const pts = [...M.points];
+  if (search) pts.sort((a, b) => search.sims[a.id] - search.sims[b.id]);
+  for (const p of pts) {
+    const [x, y] = toScreen(p);
+    let a = 0.9, rad = 5.5, col = colorOf(p);
+    if (search) {
+      const f = (search.sims[p.id] - lo) / Math.max(hi - lo, 1e-6);
+      a = 0.12 + 0.88 * f * f; rad = 3.5 + 5 * f * f;
+    }
+    if (sel && !sel.has(p.id)) a *= 0.22;
+    ctx.globalAlpha = a; ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(x, y, rad, 0, 7); ctx.fill();
+    if (sel && sel.has(p.id)) {
+      ctx.globalAlpha = 1; ctx.lineWidth = 1.6; ctx.strokeStyle = dark ? "#fff" : "#1d1d1b"; ctx.stroke();
+    }
+  }
+  ctx.globalAlpha = 1;
+  if (colorBy === "cluster" && !search) {
+    ctx.font = "600 12px -apple-system, sans-serif"; ctx.textAlign = "center";
+    const placed = [];
+    for (const c of [...M.clusters].sort((a, b) => b.n - a.n)) {
+      const [x, y] = toScreen(c);
+      const w = ctx.measureText(c.label).width + 14;
+      const rect = [x - w / 2, y - 26, x + w / 2, y - 6];
+      if (placed.some(q => rect[0] < q[2] && rect[2] > q[0] && rect[1] < q[3] && rect[3] > q[1])) continue;
+      placed.push(rect);
+      ctx.fillStyle = dark ? "rgba(26,27,26,.82)" : "rgba(255,255,255,.86)";
+      ctx.beginPath(); ctx.roundRect(x - w / 2, y - 26, w, 20, 10); ctx.fill();
+      ctx.fillStyle = dark ? "#ecebe6" : "#1d1d1b"; ctx.fillText(c.label, x, y - 12);
+    }
+  }
+  if (hover) { const [x, y] = toScreen(hover); ctx.lineWidth = 2; ctx.strokeStyle = colorOf(hover);
+    ctx.beginPath(); ctx.arc(x, y, 10, 0, 7); ctx.stroke(); }
+  if (box) { ctx.fillStyle = "rgba(61,111,224,.12)"; ctx.strokeStyle = "#3d6fe0"; ctx.lineWidth = 1;
+    ctx.fillRect(box.x0, box.y0, box.x1 - box.x0, box.y1 - box.y0);
+    ctx.strokeRect(box.x0, box.y0, box.x1 - box.x0, box.y1 - box.y0); }
+}
+function nearest(mx, my) {
+  let best = null, bd = 14 * 14;
+  for (const p of M.points) { const [x, y] = toScreen(p), d = (x - mx) ** 2 + (y - my) ** 2; if (d < bd) { bd = d; best = p; } }
+  return best;
+}
+let drag = null;
+cv.addEventListener("mousedown", e => {
+  const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+  if (e.shiftKey) box = {x0: mx, y0: my, x1: mx, y1: my};
+  else drag = {x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, moved: false};
+  cv.classList.add("dragging");
+});
+addEventListener("mouseup", e => {
+  cv.classList.remove("dragging");
+  if (box) {
+    const xs = [box.x0, box.x1].sort((a, b) => a - b), ys = [box.y0, box.y1].sort((a, b) => a - b);
+    const ids = M.points.filter(p => { const [x, y] = toScreen(p); return x >= xs[0] && x <= xs[1] && y >= ys[0] && y <= ys[1]; }).map(p => p.id);
+    box = null;
+    if (ids.length) select({title: `${ids.length} selected`, sub: "box selection", ids});
+    else draw();
+    return;
+  }
+  if (drag && !drag.moved && e.target === cv) {
+    const r = cv.getBoundingClientRect(), p = nearest(e.clientX - r.left, e.clientY - r.top);
+    if (p) {
+      if (p.cluster >= 0) selectCluster(p.cluster, p.id);
+      else select({title: "Unclustered moment", sub: clipName(p.clip), ids: [p.id]});
+    }
+  }
+  drag = null;
+});
+addEventListener("mousemove", e => {
+  const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+  if (box) { box.x1 = mx; box.y1 = my; draw(); return; }
+  if (drag) {
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
+    view.x = drag.vx + dx; view.y = drag.vy + dy; draw(); return;
+  }
+  if (e.target !== cv) return;
+  const p = nearest(mx, my);
+  if (p !== hover) { hover = p; draw(); }
+  const tip = $("#tip");
+  if (!p) { tip.style.display = "none"; return; }
+  $("#tipimg").src = `/thumb/${p.id}`;
+  $("#tip1").textContent = clipName(p.clip);
+  const sim = search ? ` · sim ${search.sims[p.id].toFixed(2)}` : "";
+  $("#tip2").textContent = `${tc(p.t0)}–${tc(p.t1)}${sim} · ${tagLine(judged[p.id]?.tags || p.tags)}`;
+  tip.style.display = "block";
+  const tw = 250, th = 190;
+  tip.style.left = Math.min(mx + 16, r.width - tw) + "px";
+  tip.style.top = (my + 16 + th > r.height ? my - th - 8 : my + 16) + "px";
+});
+cv.addEventListener("mouseleave", () => { hover = null; $("#tip").style.display = "none"; draw(); });
+cv.addEventListener("wheel", e => {
+  e.preventDefault();
+  const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+  const k = Math.exp(-e.deltaY * 0.0015), s = Math.min(20, Math.max(0.5, view.s * k)), f = s / view.s;
+  view.x = mx - (mx - view.x) * f; view.y = my - (my - view.y) * f; view.s = s; draw();
+}, {passive: false});
+$("#reset").onclick = () => { view = {s: 1, x: 0, y: 0}; draw(); };
+new ResizeObserver(size).observe($("#main"));
+
+// ---------------------------------------------------------------- sidebar
+function renderList() {
+  const list = $("#list"); list.innerHTML = "";
+  let items;
+  if (colorBy === "clip") {
+    $("#listTitle").textContent = "Sources";
+    items = M.clips.map((c, i) => ({key: c.id, name: c.name, n: M.points.filter(p => p.clip === c.id).length,
+      color: PALETTE[i % PALETTE.length], ids: M.points.filter(p => p.clip === c.id).map(p => p.id)}));
+  } else if (colorBy === "emotion") {
+    $("#listTitle").textContent = "Emotions (judged moments)";
+    const groups = {};
+    for (const p of M.points) { const t = judged[p.id]?.tags || p.tags; const e = t?.emotion || "not judged";
+      (groups[e] ||= []).push(p.id); }
+    items = Object.entries(groups).sort((a, b) => b[1].length - a[1].length)
+      .map(([e, ids]) => ({key: e, name: e, n: ids.length, color: EMO[e] || "#9a9993", ids}));
+  } else {
+    $("#listTitle").textContent = "Clusters";
+    items = M.clusters.map(c => ({key: c.id, name: c.label, n: c.n, color: PALETTE[c.id % PALETTE.length],
+      ids: M.points.filter(p => p.cluster === c.id).map(p => p.id)}));
+    const noise = M.points.filter(p => p.cluster < 0).map(p => p.id);
+    if (noise.length) items.push({key: -1, name: "Unclustered", n: noise.length, color: "#9a9993", ids: noise});
+  }
+  for (const it of items) {
+    const el = document.createElement("div");
+    el.className = "item" + (selection?.key === `${colorBy}:${it.key}` ? " on" : "");
+    el.innerHTML = `<span class="swatch" style="background:${it.color}"></span><span class="name"></span><span class="n">${it.n}</span>`;
+    el.querySelector(".name").textContent = it.name;
+    el.onclick = () => select({key: `${colorBy}:${it.key}`, title: it.name, sub: `${it.n} moments`, ids: it.ids});
+    list.appendChild(el);
+  }
+}
+function selectCluster(cid) {
+  const c = M.clusters.find(c => c.id === cid);
+  const ids = M.points.filter(p => p.cluster === cid).map(p => p.id);
+  select({key: `cluster:${cid}`, title: c.label, sub: `cluster · ${ids.length} moments`, ids});
+}
+document.querySelectorAll("#colorby button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("#colorby button").forEach(x => x.classList.toggle("on", x === b));
+  colorBy = b.dataset.k; renderList(); legend(); draw();
+});
+function legend() {
+  $("#legend").textContent = search
+    ? `Brighter and bigger = closer to “${search.query}”`
+    : {cluster: "Nearby points look and sound alike. Labels are the closest of a fixed set of scene descriptions.",
+       clip: "Coloured by source file.", emotion: "Coloured by Clef-Omni's emotion read; grey = not judged yet."}[colorBy];
+}
+
+// ---------------------------------------------------------------- drawer
+function select(s) {
+  selection = s; search && !s.fromSearch && clearSearch(false);
+  renderList(); renderStrip(); draw();
+}
+function renderStrip() {
+  const strip = $("#strip"); strip.innerHTML = "";
+  if (!selection) { $("#dtitle").textContent = "Nothing selected"; $("#dsub").textContent = "Click a cluster, a point, or search."; $("#judge").style.display = "none"; return; }
+  $("#dtitle").textContent = selection.title; $("#dsub").textContent = selection.sub;
+  $("#judge").style.display = selection.fromSearch ? "" : "none";
+  let ids = [...selection.ids];
+  if (selection.fromSearch) {
+    const j = id => judged[id]?.[`q:${search.query}`];
+    if (ids.some(id => j(id) != null)) ids.sort((a, b) => (j(b) ?? -1) - (j(a) ?? -1));
+  } else ids.sort((a, b) => byId.get(a).clip - byId.get(b).clip || byId.get(a).t0 - byId.get(b).t0);
+  for (const id of ids) {
+    const p = byId.get(id), card = document.createElement("div");
+    card.className = "card";
+    const sim = selection.fromSearch ? `<span class="badge">sim ${search.sims[id].toFixed(2)}</span>` : "";
+    const js = selection.fromSearch ? judged[id]?.[`q:${search.query}`] : null;
+    const jb = js != null ? `<span class="badge judge">${Math.round(js * 100)}% match</span>` : "";
+    card.innerHTML = `<img loading="lazy" src="/thumb/${id}">${sim}${jb}<div class="meta"><div class="clip"></div>
+      <div class="tc">${tc(p.t0)} – ${tc(p.t1)}</div><div class="tags"></div></div>`;
+    card.querySelector(".clip").textContent = clipName(p.clip);
+    card.querySelector(".tags").textContent = tagLine(judged[id]?.tags || p.tags);
+    card.onclick = () => play(p);
+    card.onmouseenter = () => { hover = p; draw(); };
+    strip.appendChild(card);
+  }
+}
+function play(p) {
+  const v = $("#video");
+  v.src = `/video/${p.id}#t=${Math.max(0, p.t0 - 0.5)},${p.t1 + 0.5}`;
+  $("#vt").textContent = clipName(p.clip); $("#vs").textContent = `${tc(p.t0)} – ${tc(p.t1)} · ${tagLine(judged[p.id]?.tags || p.tags)}`;
+  $("#modal").classList.add("on"); v.play().catch(() => {});
+}
+function closeModal() { const v = $("#video"); v.pause(); v.removeAttribute("src"); v.load(); $("#modal").classList.remove("on"); }
+$("#vclose").onclick = closeModal;
+$("#modal").onclick = e => { if (e.target.id === "modal") closeModal(); };
+addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+// ---------------------------------------------------------------- search + judge
+function clearSearch(redraw = true) { search = null; $("#qhint").textContent = "Describe a moment. Points light up by how close they are."; legend(); if (redraw) draw(); }
+$("#form").onsubmit = async e => {
+  e.preventDefault();
+  const q = $("#q").value.trim();
+  if (!q) { clearSearch(); selection = null; renderStrip(); return; }
+  $("#qhint").textContent = "Searching…";
+  const r = await fetch(`/api/search?q=${encodeURIComponent(q)}`).then(r => r.json());
+  if (r.error) { $("#qhint").innerHTML = `<span class="err">${r.error}</span>`; return; }
+  search = {query: q, sims: r.sims, hits: r.hits};
+  $("#qhint").textContent = `Compared with all ${M.points.length} moments in ${r.ms} ms.`;
+  selection = {fromSearch: true, title: `“${q}”`, sub: `top ${r.hits.length} by embedding similarity`, ids: r.hits.map(h => h.id)};
+  legend(); renderList(); renderStrip(); draw();
+};
+$("#q").addEventListener("input", e => {
+  if (!e.target.value && search) { clearSearch(false); selection = null; renderStrip(); renderList(); draw(); }
+});
+$("#judge").onclick = async () => {
+  const b = $("#judge"), q = search.query, ids = selection.ids;
+  b.disabled = true; b.textContent = `Judging ${ids.length} moments…`;
+  const r = await fetch(`/api/judge?q=${encodeURIComponent(q)}&ids=${ids.join(",")}`).then(r => r.json());
+  b.disabled = false; b.textContent = "Judge with Clef-Omni";
+  if (r.error) { $("#dsub").innerHTML = `<span class="err">${r.error}</span>`; return; }
+  for (const [id, v] of Object.entries(r.results)) {
+    judged[id] = {...(judged[id] || {}), tags: v.tags, [`q:${q}`]: v.score};
+    const p = byId.get(+id); if (p) p.tags = v.tags;
+  }
+  selection.sub = `top ${ids.length}, re-ranked by Clef-Omni in ${r.seconds} s`;
+  renderStrip(); renderList(); draw();
+};
+
+// ---------------------------------------------------------------- boot
+(async () => {
+  M = await fetch("/api/map").then(r => r.json());
+  if (M.error) { $("#stats").innerHTML = `<span class="err">${M.error}</span>`; return; }
+  M.points.forEach(p => byId.set(p.id, p));
+  const mins = M.points.reduce((s, p) => s + (p.t1 - p.t0), 0) / 60;
+  $("#stats").textContent = `${M.points.length} moments · ${M.clips.length} sources · ${mins.toFixed(1)} min · ${M.clusters.length} clusters`;
+  renderList(); legend(); size();
+})();
+</script>
+</body>
+</html>

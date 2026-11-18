@@ -1,0 +1,10 @@
+# Film frames copied in by search results
+creator-vault/**/selects/
+__pycache__/
+# Obsidian per-window state
+creator-vault/.obsidian/workspace*.json
+# Generated picks: link to local film files on this machine
+creator-vault/**/Selects.md
+creator-vault/Searches/
+# Local preview launcher (machine-specific paths)
+.claude/
