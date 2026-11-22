@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clef-Omni first tests</title>
+<style>
+:root { --bg:#fbfaf7; --card:#ffffff; --text:#1d1d1b; --muted:#6b6a65; --line:#e3e1da;
+  --ok-bg:#eaf3de; --ok:#27500a; --bad-bg:#fcebeb; --bad:#791f1f; --unk-bg:#f1efe8; --unk:#5f5e5a; --bar:#378add; }
+@media (prefers-color-scheme: dark) { :root { --bg:#161615; --card:#1f1f1d; --text:#ecebe6; --muted:#a3a29b;
+  --line:#34342f; --ok-bg:#173404; --ok:#c0dd97; --bad-bg:#501313; --bad:#f7c1c1; --unk-bg:#2c2c2a; --unk:#d3d1c7;
+  --bar:#85b7eb; } }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--text);
+  font:16px/1.6 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; }
+main { max-width:980px; margin:0 auto; padding:48px 24px 80px; }
+h1 { font-size:28px; font-weight:600; margin:0 0 4px; }
+h2 { font-size:19px; font-weight:600; margin:48px 0 8px; }
+p { margin:8px 0; }
+.sub, .note { color:var(--muted); }
+.note { font-size:14px; }
+.lead { font-size:18px; margin:20px 0 24px; }
+.cards { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px 18px; }
+.card .k { font-size:13px; color:var(--muted); }
+.card .v { font-size:26px; font-weight:600; }
+.card .d { font-size:13px; color:var(--muted); }
+.wrap { overflow-x:auto; background:var(--card); border:1px solid var(--line); border-radius:10px; margin-top:12px; }
+table { border-collapse:collapse; width:100%; font-size:14px; }
+th, td { text-align:left; padding:9px 14px; border-bottom:1px solid var(--line); vertical-align:middle; }
+th { font-weight:600; color:var(--muted); font-size:13px; white-space:nowrap; }
+tr:last-child td { border-bottom:none; }
+td.p { white-space:nowrap; }
+.bar { display:inline-block; width:70px; height:6px; background:var(--line); border-radius:3px; margin-right:8px;
+  vertical-align:middle; overflow:hidden; }
+.bar span { display:block; height:100%; background:var(--bar); }
+.num { font-variant-numeric:tabular-nums; }
+.tag { display:inline-block; font-size:12px; padding:2px 9px; border-radius:6px; white-space:nowrap; }
+.ok { background:var(--ok-bg); color:var(--ok); } .bad { background:var(--bad-bg); color:var(--bad); }
+.unk { background:var(--unk-bg); color:var(--unk); }
+ul { padding-left:20px; margin:8px 0; } li { margin:4px 0; }
+code { font:13px ui-monospace, SFMono-Regular, Menlo, monospace; background:var(--unk-bg); padding:1px 5px;
+  border-radius:4px; }
+</style>
+</head>
+<body>
+<main>
+<h1>Clef-Omni first tests</h1>
+<p class="sub">sacred-timeline · 16 November 2026 · run locally on an Apple M5 Max with 128 GB of memory</p>
+
+<p class="lead">Clef-Omni answered every question we could check correctly: 9 of 9 on a generated
+test clip and 19 of 19 on a real 6.8-second clip from a TV drama. It took about
+1 second to answer 16 questions about the real clip.</p>
+
+<div class="cards">
+<div class="card"><div class="k">Generated clip</div><div class="v">9 / 9</div>
+<div class="d">checked answers correct</div></div>
+<div class="card"><div class="k">Real clip</div><div class="v">19 / 19</div>
+<div class="d">checked answers correct, 3 more not checked</div></div>
+<div class="card"><div class="k">Video, 16 questions</div><div class="v">0.97 s</div>
+<div class="d">median of 3 runs, 6.8 s clip</div></div>
+<div class="card"><div class="k">Audio only, 6 questions</div><div class="v">0.23 s</div>
+<div class="d">median of 3 runs</div></div>
+</div>
+
+<h2>What was tested</h2>
+<p>Clef-Omni is a decision model. It takes text, images, audio or video plus a set of closed questions, and returns
+a probability for each possible answer. It does not write text. In sacred-timeline it is the candidate for judging
+footage locally, so film files never leave the Mac.</p>
+<ul>
+<li><strong>Model:</strong> <code>mlx-community/clef-omni-8bit</code>, 33 GB on disk.</li>
+<li><strong>Software:</strong> Python 3.12, mlx 0.32.4, mlx-vlm 0.7.12, transformers 5.23.0.</li>
+<li><strong>Method:</strong> each clip was sent with all its questions in one request. Timings exclude the
+2-second model load and one warm-up request.</li>
+</ul>
+
+<h2>Test 1: generated clip</h2>
+<p>A 6-second clip made for the test: a red circle moving left to right on a blue background, with a steady tone
+as the soundtrack. Three text-only questions were included as a baseline. The correct answers are known because
+the clip was built to order.</p>
+<div class="wrap"><table>
+<tr><th>Input</th><th>Question</th><th>Correct answer</th><th>Model's answer</th><th>Probability</th><th>Result</th></tr>
+<tr><td>Text</td><td>Which team handles a checkout outage?</td><td>Technical</td><td>Technical</td><td class='p'><span class="bar"><span style="width:85%"></span></span><span class="num">0.85</span></td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>Text</td><td>How urgent is it?</td><td>Today</td><td>Today</td><td class='p'><span class="bar"><span style="width:92%"></span></span><span class="num">0.92</span></td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>Text</td><td>Is a service down?</td><td>Yes</td><td>Yes</td><td class='p'><span class="bar"><span style="width:95%"></span></span><span class="num">0.95</span></td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>Video</td><td>What shape moves across the frame?</td><td>Circle</td><td>Circle</td><td class='p'><span class="bar"><span style="width:98%"></span></span><span class="num">0.98</span></td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>Video</td><td>What colour is the shape?</td><td>Red</td><td>Red</td><td class='p'><span class="bar"><span style="width:97%"></span></span><span class="num">0.97</span></td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>Video</td><td>Which way does it move?</td><td>Left to right</td><td>Left to right</td><td class='p'><span class="bar"><span style="width:83%"></span></span><span class="num">0.83</span></td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>Audio</td><td>Is there a steady tone?</td><td>Yes</td><td>Yes</td><td class='p'><span class="bar"><span style="width:86%"></span></span><span class="num">0.86</span></td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>Audio</td><td>Is anyone speaking?</td><td>No</td><td>No</td><td class='p'><span class="bar"><span style="width:1%"></span></span><span class="num">0.01</span></td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>Video</td><td>Is a person visible?</td><td>No</td><td>No</td><td class='p'><span class="bar"><span style="width:0%"></span></span><span class="num">0.00</span></td><td><span class="tag ok">Correct</span></td></tr>
+</table></div>
+<p class="note">Probability is the model's confidence in its chosen answer. For yes/no questions it is the
+probability of "yes", so a value near 0 is a confident "no".</p>
+
+<h2>Test 2: real clip, video with soundtrack</h2>
+<p>A 6.8-second vertical clip (1080 × 1920, 24 frames per second, stereo sound) from an HBO drama: a man in a suit
+speaks one line to a room, with captions on screen. Correct answers were established by looking at 12 frames
+sampled evenly across the clip, and by reading the captions in those frames for what was said.</p>
+<div class="wrap"><table>
+<tr><th>Question</th><th>Correct answer</th><th>Model's answer</th><th>Probability</th><th>Checked against</th><th>Result</th></tr>
+<tr><td>Is a person speaking on camera?</td><td>Yes</td><td>Yes</td><td class='p'><span class="bar"><span style="width:98%"></span></span><span class="num">0.98</span></td><td>Sampled frames</td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>What is the main person wearing?</td><td>Suit and tie</td><td>Suit and tie</td><td class='p'><span class="bar"><span style="width:94%"></span></span><span class="num">0.94</span></td><td>Sampled frames</td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>What colour is his tie?</td><td>Dark red</td><td>Dark red</td><td class='p'><span class="bar"><span style="width:95%"></span></span><span class="num">0.95</span></td><td>Sampled frames</td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>Where does the scene take place?</td><td>Office</td><td>Office</td><td class='p'><span class="bar"><span style="width:98%"></span></span><span class="num">0.98</span></td><td>Sampled frames</td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>What kind of shot is it?</td><td>Close-up</td><td>Close-up</td><td class='p'><span class="bar"><span style="width:97%"></span></span><span class="num">0.97</span></td><td>Sampled frames</td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>What is the frame orientation?</td><td>Vertical</td><td>Vertical</td><td class='p'><span class="bar"><span style="width:91%"></span></span><span class="num">0.91</span></td><td>Sampled frames</td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>Are captions shown on screen?</td><td>Yes</td><td>Yes</td><td class='p'><span class="bar"><span style="width:97%"></span></span><span class="num">0.97</span></td><td>Sampled frames</td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>Which network logo is in the corner?</td><td>HBO</td><td>HBO</td><td class='p'><span class="bar"><span style="width:95%"></span></span><span class="num">0.95</span></td><td>Sampled frames</td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>Are other people visible behind him?</td><td>Yes</td><td>Yes</td><td class='p'><span class="bar"><span style="width:94%"></span></span><span class="num">0.94</span></td><td>Sampled frames</td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>Is the scene outdoors?</td><td>No</td><td>No</td><td class='p'><span class="bar"><span style="width:0%"></span></span><span class="num">0.00</span></td><td>Sampled frames</td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>Is a car visible?</td><td>No</td><td>No</td><td class='p'><span class="bar"><span style="width:0%"></span></span><span class="num">0.00</span></td><td>Sampled frames</td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>Is this animation?</td><td>No</td><td>No</td><td class='p'><span class="bar"><span style="width:0%"></span></span><span class="num">0.00</span></td><td>Sampled frames</td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>What does he say he wanted to do?</td><td>Get the gang together</td><td>Get the gang together</td><td class='p'><span class="bar"><span style="width:96%"></span></span><span class="num">0.96</span></td><td>On-screen captions</td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>What is the last word he says?</td><td>Yo</td><td>Yo</td><td class='p'><span class="bar"><span style="width:92%"></span></span><span class="num">0.92</span></td><td>On-screen captions</td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>How does he deliver the line?</td><td>Hesitant</td><td>Hesitant</td><td class='p'><span class="bar"><span style="width:94%"></span></span><span class="num">0.94</span></td><td>On-screen captions</td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>Is there background music?</td><td>Unknown</td><td>No</td><td class='p'><span class="bar"><span style="width:6%"></span></span><span class="num">0.06</span></td><td>Not checked</td><td><span class="tag unk">Not checked</span></td></tr>
+</table></div>
+<p class="note">Input size: 3,457 tokens. Run times: 1.07 s, 0.97 s, 0.97 s.</p>
+
+<h2>Test 3: real clip, audio only</h2>
+<p>The same clip with the picture removed. This matters because in Test 2 the model could have read the spoken
+line from the on-screen captions. Here it had only the sound, and it gave the same answers.</p>
+<div class="wrap"><table>
+<tr><th>Question</th><th>Correct answer</th><th>Model's answer</th><th>Probability</th><th>Checked against</th><th>Result</th></tr>
+<tr><td>Is someone speaking?</td><td>Yes</td><td>Yes</td><td class='p'><span class="bar"><span style="width:96%"></span></span><span class="num">0.95</span></td><td>On-screen captions</td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>What does he say he wanted to do?</td><td>Get the gang together</td><td>Get the gang together</td><td class='p'><span class="bar"><span style="width:98%"></span></span><span class="num">0.98</span></td><td>On-screen captions</td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>What is the last word he says?</td><td>Yo</td><td>Yo</td><td class='p'><span class="bar"><span style="width:93%"></span></span><span class="num">0.93</span></td><td>On-screen captions</td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>How does he deliver the line?</td><td>Hesitant</td><td>Hesitant</td><td class='p'><span class="bar"><span style="width:93%"></span></span><span class="num">0.93</span></td><td>On-screen captions</td><td><span class="tag ok">Correct</span></td></tr>
+<tr><td>How many different people speak?</td><td>Unknown</td><td>One</td><td class='p'><span class="bar"><span style="width:96%"></span></span><span class="num">0.96</span></td><td>Not checked</td><td><span class="tag unk">Not checked</span></td></tr>
+<tr><td>Is there background music?</td><td>Unknown</td><td>No</td><td class='p'><span class="bar"><span style="width:22%"></span></span><span class="num">0.22</span></td><td>Not checked</td><td><span class="tag unk">Not checked</span></td></tr>
+</table></div>
+<p class="note">Input size: 707 tokens. Run times: 0.23 s, 0.23 s, 0.22 s.</p>
+
+<h2>What this shows</h2>
+<ul>
+<li><strong>It sees real footage accurately.</strong> Clothing, setting, shot type, on-screen text and a small
+corner logo were all read correctly, each with probability above 0.9.</li>
+<li><strong>It hears dialogue.</strong> With no picture, it still picked the right paraphrase of the line and the
+right final word.</li>
+<li><strong>It is fast enough for indexing.</strong> About 1 second for a 6.8-second clip suggests
+roughly 17 minutes for a two-hour film at 16 questions per segment. That is an extrapolation from
+one clip, not a measurement.</li>
+</ul>
+
+<h2>What this does not show</h2>
+<ul>
+<li><strong>The sample is tiny.</strong> Two clips and 31 questions. The real
+clip is a clean, well-lit close-up with one speaker, which is about as easy as real footage gets.</li>
+<li><strong>The questions were easy.</strong> Wrong options were clearly wrong. Telling two similar scenes apart,
+or recognising a specific character, is untested.</li>
+<li><strong>3 answers have no reference.</strong> The checker could see frames but not hear the sound, so
+background music and the number of speakers were not verified. On music the two runs also disagree in strength:
+0.06 with the picture and 0.22 with audio only. Both lean "no", but the gap is worth a closer look.</li>
+<li><strong>No hard cases.</strong> Dark scenes, fast cuts, overlapping speech, loud music under dialogue and
+clips longer than a few seconds were not tried.</li>
+</ul>
+
+<h2>Next tests worth running</h2>
+<ul>
+<li>A full scene of several minutes, split into segments, to measure real indexing speed.</li>
+<li>Questions with near-miss options, to see where the probabilities stop being trustworthy.</li>
+<li>A transcript from a speech-to-text model as an independent reference for the audio answers.</li>
+</ul>
+</main>
+</body>
+</html>
